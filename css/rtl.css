@@ -1,0 +1,32 @@
+.hebrew-text,
+.hebrew-content,
+.exercise-hebrew {
+  direction: rtl;
+  text-align: right;
+  font-family: "SBL Hebrew", "Ezra SIL", "Arial Hebrew", Arial, sans-serif;
+  font-size: 1.4em;
+  line-height: 1.8;
+}
+
+.hebrew-keyboard {
+  display: grid;
+  grid-template-columns: repeat(11, 1fr);
+  gap: 6px;
+  direction: rtl;
+}
+
+.hebrew-key {
+  aspect-ratio: 1;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  font-family: "SBL Hebrew", "Ezra SIL", Arial, sans-serif;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.hebrew-key:hover {
+  background: var(--bg-hover);
+}

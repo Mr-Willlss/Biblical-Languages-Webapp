@@ -1,0 +1,59 @@
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06);
+  }
+}
+
+@keyframes floatUp {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(0.92);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-72px) scale(1.15);
+  }
+}
+
+@keyframes confettiFall {
+  from {
+    transform: translateY(-20vh) rotate(0deg);
+  }
+  to {
+    transform: translateY(120vh) rotate(540deg);
+  }
+}
+
+.xp-popup {
+  position: fixed;
+  z-index: 90;
+  pointer-events: none;
+  color: var(--xp-gold);
+  font-weight: 900;
+  animation: floatUp 1s ease forwards;
+}
+
+.confetti-piece {
+  position: fixed;
+  z-index: 95;
+  top: -20px;
+  width: 9px;
+  height: 14px;
+  border-radius: 3px;
+  animation: confettiFall 1.45s ease-in forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+  }
+}
