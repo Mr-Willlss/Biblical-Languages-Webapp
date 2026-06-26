@@ -150,6 +150,14 @@ function sidebarLink(href, page, iconName, label) {
   return `<a href="${href}" class="sb-link" data-page="${page}" aria-label="${label}">${icon(iconName, label)}</a>`;
 }
 
+const MOBILE_NAV_ITEMS = [
+  { href: "dashboard.html", page: "dashboard", iconName: "home", label: "Home" },
+  { href: "lesson-player.html", page: "lesson-player", iconName: "play-circle", label: "Learn" },
+  { href: "practice.html", page: "practice", iconName: "target", label: "Review" },
+  { href: "quests.html", page: "quests", iconName: "sparkles", label: "Quests" },
+  { href: "profile.html", page: "profile", iconName: "user-round", label: "Me" }
+];
+
 function renderAppShell({ page, title, mountId = "page-root" }) {
   const user = getDemoUser();
   const activeLang = LangManager.getConfig();
@@ -201,6 +209,9 @@ function renderAppShell({ page, title, mountId = "page-root" }) {
         </div>
       </header>
       <main class="main-content" id="${mountId}"></main>
+      <nav class="mobile-tabbar" aria-label="Primary mobile navigation">
+        ${MOBILE_NAV_ITEMS.map((item) => `<a class="mobile-tab ${item.page === page ? "active" : ""}" href="${item.href}" aria-label="${item.label}">${icon(item.iconName, item.label)}</a>`).join("")}
+      </nav>
     </div>`;
 
   document.querySelectorAll(".sb-link").forEach((link) => {
