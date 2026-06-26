@@ -6,7 +6,7 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--bg-card);
-  box-shadow: var(--shadow-card);
+  box-shadow: var(--shadow-soft);
 }
 
 .auth-card {
@@ -22,18 +22,31 @@
 .hero-card {
   position: relative;
   overflow: hidden;
-  border: 1px solid var(--border-active);
+  border: 1px solid color-mix(in srgb, var(--lang-primary), transparent 70%);
   border-radius: var(--radius-xl);
   background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.02)),
-    var(--lang-gradient);
-  padding: 28px;
-  box-shadow: var(--shadow-card);
+    linear-gradient(135deg, color-mix(in srgb, var(--lang-primary), transparent 92%), transparent 55%),
+    var(--bg-card);
+  padding: 26px;
+  box-shadow: var(--shadow-soft);
+}
+
+.hero-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: var(--lang-primary);
+}
+
+.hero-card h2 {
+  margin-bottom: 12px;
+  font-size: clamp(1.7rem, 3vw, 2.6rem);
 }
 
 .hero-card h2,
 .hero-card p {
-  max-width: 760px;
+  max-width: 780px;
 }
 
 .btn,
@@ -45,7 +58,7 @@
   background: var(--bg-tertiary);
   color: var(--text-primary);
   cursor: pointer;
-  font-weight: 750;
+  font-weight: 720;
 }
 
 .btn {
@@ -54,14 +67,14 @@
   justify-content: center;
   gap: 8px;
   min-height: 42px;
-  padding: 0 16px;
+  padding: 0 15px;
 }
 
 .btn-primary {
-  border-color: transparent;
-  background: var(--lang-gradient);
-  color: white;
-  box-shadow: var(--shadow-glow);
+  border-color: color-mix(in srgb, var(--lang-primary), transparent 40%);
+  background: var(--lang-primary);
+  color: #ffffff;
+  box-shadow: none;
 }
 
 .btn-ghost {
@@ -74,6 +87,12 @@
 .tab-btn:hover {
   transform: translateY(-1px);
   border-color: var(--border-active);
+  background: var(--bg-hover);
+}
+
+.btn-primary:hover {
+  background: var(--lang-secondary);
+  color: #080a0f;
 }
 
 .icon-btn {
@@ -98,8 +117,8 @@
 
 .lang-btn.active,
 .tab-btn.active {
-  border-color: var(--lang-primary);
-  background: rgba(124, 92, 252, 0.13);
+  border-color: color-mix(in srgb, var(--lang-primary), transparent 48%);
+  background: color-mix(in srgb, var(--lang-primary), transparent 88%);
   color: var(--text-primary);
 }
 
@@ -109,18 +128,18 @@
   gap: 6px;
   border: 1px solid var(--border);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.04);
+  background: color-mix(in srgb, var(--bg-card-soft), transparent 18%);
   padding: 6px 10px;
   color: var(--text-secondary);
   font-size: 0.78rem;
-  font-weight: 750;
+  font-weight: 720;
 }
 
 .progress {
   overflow: hidden;
-  height: 10px;
+  height: 8px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.11);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .progress > span {
@@ -128,7 +147,7 @@
   height: 100%;
   width: 0%;
   border-radius: inherit;
-  background: var(--lang-gradient);
+  background: var(--lang-primary);
 }
 
 .progress > .w0 { width: 0%; }
@@ -145,10 +164,17 @@
   width: 110px;
 }
 
+.stat-card {
+  min-height: 108px;
+  display: grid;
+  align-content: center;
+}
+
 .stat-card strong {
   display: block;
   margin-bottom: 5px;
-  font-size: clamp(1.55rem, 4vw, 2.2rem);
+  font-size: clamp(1.45rem, 3vw, 2rem);
+  line-height: 1;
 }
 
 .muted {
@@ -186,7 +212,7 @@
   gap: 12px;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.025);
+  background: color-mix(in srgb, var(--bg-card-soft), transparent 36%);
   padding: 12px;
 }
 
@@ -200,8 +226,8 @@
   display: grid;
   place-items: center;
   position: relative;
-  width: 46px;
-  height: 46px;
+  width: 44px;
+  height: 44px;
   border: 1px solid var(--border);
   border-radius: 50%;
   background: var(--bg-tertiary);
@@ -211,21 +237,20 @@
 }
 
 .lesson-dot.complete {
-  border-color: rgba(34, 197, 94, 0.55);
-  background: rgba(34, 197, 94, 0.18);
-  color: #d6ffe4;
+  border-color: color-mix(in srgb, var(--success), transparent 45%);
+  background: color-mix(in srgb, var(--success), transparent 88%);
+  color: #dffbed;
 }
 
 .lesson-dot.current {
   border-color: var(--lang-primary);
-  color: white;
-  box-shadow: var(--shadow-glow);
-  animation: pulse 1.8s ease-in-out infinite;
+  color: var(--text-primary);
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--lang-primary), transparent 86%);
 }
 
 .lesson-dot.locked {
   cursor: not-allowed;
-  opacity: 0.46;
+  opacity: 0.42;
 }
 
 .form-grid {
@@ -241,12 +266,13 @@
 .field label {
   color: var(--text-secondary);
   font-size: 0.82rem;
-  font-weight: 750;
+  font-weight: 720;
 }
 
 .field input,
 .field textarea,
-.field select {
+.field select,
+select {
   width: 100%;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -316,47 +342,114 @@
   margin-top: 18px;
 }
 
+.landing-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: min(1120px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 22px 0;
+}
+
+.landing-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 800;
+}
+
 .landing-hero {
   display: grid;
   align-items: center;
-  min-height: 88vh;
-  padding: 54px 24px;
+  min-height: 72vh;
+  padding: 24px 24px 36px;
 }
 
 .landing-inner {
-  width: min(1100px, 100%);
+  width: min(1120px, 100%);
   margin: 0 auto;
 }
 
 .landing-title {
-  max-width: 780px;
-  margin: 24px 0 12px;
-  font-size: clamp(2.5rem, 7vw, 5.8rem);
-  line-height: 0.95;
+  max-width: 820px;
+  margin: 24px 0 18px;
+  font-size: clamp(3rem, 7vw, 5.6rem);
+  line-height: 0.98;
+  letter-spacing: -0.02em;
+}
+
+.landing-inner > .muted {
+  max-width: 720px;
+  font-size: clamp(1rem, 1.6vw, 1.2rem);
 }
 
 .language-cards {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
-  margin-top: 34px;
+  gap: 16px;
+  margin-top: 36px;
+}
+
+.landing-section {
+  width: min(1120px, calc(100% - 32px));
+  margin: 0 auto 18px;
+  padding: 0;
+}
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.feature-grid .card {
+  min-height: 156px;
+  box-shadow: none;
+}
+
+.feature-grid h2,
+.lesson-preview h2 {
+  font-size: 1rem;
+}
+
+.lesson-preview {
+  padding: 20px;
+}
+
+.landing-footer {
+  width: min(1120px, calc(100% - 32px));
+  margin: 28px auto;
+  padding: 0;
 }
 
 .language-card {
+  display: grid;
+  gap: 14px;
+  min-height: 230px;
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  background: var(--bg-card);
-  padding: 22px;
+  border-radius: var(--radius-xl);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--bg-card-soft), transparent 20%), transparent),
+    var(--bg-card);
+  color: var(--text-primary);
+  padding: 24px;
   cursor: pointer;
+  text-align: left;
+  box-shadow: var(--shadow-soft);
 }
 
 .language-card:hover {
-  transform: translateY(-3px);
-  border-color: var(--border-active);
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--lang-primary), transparent 40%);
+  box-shadow: var(--shadow-card);
+}
+
+.language-card .btn {
+  width: fit-content;
 }
 
 .script-mark {
-  font-size: 3.5rem;
+  font-size: 3.2rem;
   line-height: 1;
 }
 
@@ -376,12 +469,12 @@
 
 .exercise-option.correct {
   border-color: var(--success);
-  background: rgba(34, 197, 94, 0.14);
+  background: color-mix(in srgb, var(--success), transparent 86%);
 }
 
 .exercise-option.incorrect {
   border-color: var(--error);
-  background: rgba(239, 68, 68, 0.13);
+  background: color-mix(in srgb, var(--error), transparent 88%);
 }
 
 .flashcard {
@@ -418,15 +511,15 @@
 .video-placeholder {
   display: grid;
   place-items: center;
-  min-height: 260px;
+  min-height: 240px;
   border: 1px dashed var(--border-active);
   border-radius: var(--radius-lg);
-  background: rgba(255, 255, 255, 0.035);
+  background: color-mix(in srgb, var(--bg-card-soft), transparent 34%);
   text-align: center;
 }
 
 .video-icon {
-  font-size: 2.6rem;
+  font-size: 2.4rem;
 }
 
 .stage-space {
@@ -446,7 +539,15 @@
     grid-template-columns: 1fr;
   }
 
+  .feature-grid {
+    grid-template-columns: 1fr;
+  }
+
   .top-actions .pill {
     display: none;
+  }
+
+  .landing-title {
+    font-size: clamp(2.5rem, 14vw, 4.2rem);
   }
 }

@@ -12,8 +12,7 @@
   width: var(--sidebar-width);
   flex-direction: column;
   border-right: 1px solid var(--border);
-  background: rgba(15, 15, 19, 0.94);
-  backdrop-filter: blur(18px);
+  background: color-mix(in srgb, var(--bg-secondary), black 18%);
 }
 
 .sb-brand {
@@ -21,7 +20,7 @@
   align-items: center;
   gap: 12px;
   min-height: var(--topbar-height);
-  padding: 14px 16px;
+  padding: 16px 18px;
   border-bottom: 1px solid var(--border);
 }
 
@@ -29,31 +28,33 @@
 .brand-mark {
   display: grid;
   place-items: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 12px;
-  background: var(--lang-gradient);
-  color: white;
+  width: 40px;
+  height: 40px;
+  border: 1px solid color-mix(in srgb, var(--lang-primary), transparent 58%);
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--lang-primary), transparent 88%);
+  color: var(--lang-secondary);
   font-weight: 800;
-  box-shadow: var(--shadow-glow);
 }
 
 .sb-title {
   display: block;
-  font-size: 0.9rem;
-  font-weight: 750;
+  color: var(--text-primary);
+  font-size: 0.92rem;
+  font-weight: 780;
 }
 
 .sb-sub {
   display: block;
-  color: var(--text-secondary);
+  color: var(--text-muted);
   font-size: 0.72rem;
+  font-weight: 600;
 }
 
 .sb-nav {
   flex: 1;
   overflow: auto;
-  padding: 14px 10px;
+  padding: 16px 12px;
 }
 
 .sb-section-label {
@@ -73,9 +74,10 @@
 .sb-link {
   min-height: 40px;
   padding: 0 10px;
+  border: 1px solid transparent;
   border-radius: var(--radius-sm);
   color: var(--text-secondary);
-  font-size: 0.88rem;
+  font-size: 0.9rem;
   font-weight: 650;
 }
 
@@ -83,22 +85,28 @@
   flex: 0 0 auto;
   width: 18px;
   height: 18px;
+  color: var(--text-muted);
 }
 
-.sb-link:hover,
-.sb-link.active {
+.sb-link:hover {
   background: var(--bg-hover);
   color: var(--text-primary);
 }
 
 .sb-link.active {
-  box-shadow: inset 3px 0 0 var(--lang-primary);
+  border-color: color-mix(in srgb, var(--lang-primary), transparent 66%);
+  background: color-mix(in srgb, var(--lang-primary), transparent 90%);
+  color: var(--text-primary);
+}
+
+.sb-link.active svg {
+  color: var(--lang-secondary);
 }
 
 .sb-lang-switcher {
   display: grid;
   gap: 8px;
-  padding: 12px;
+  padding: 14px 12px;
   border-top: 1px solid var(--border);
 }
 
@@ -111,14 +119,15 @@
   justify-content: space-between;
   height: var(--topbar-height);
   border-bottom: 1px solid var(--border);
-  background: rgba(15, 15, 19, 0.86);
-  padding: 0 24px;
+  background: rgba(9, 11, 16, 0.9);
+  padding: 0 28px;
   backdrop-filter: blur(18px);
 }
 
 .topbar h1 {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: 1.26rem;
+  font-weight: 800;
 }
 
 .top-actions {
@@ -132,27 +141,27 @@
 }
 
 .main-content {
-  width: min(1280px, 100%);
+  width: min(1180px, 100%);
   margin: 0 auto;
-  padding: 28px;
+  padding: 32px 28px 56px;
 }
 
 .page-grid {
   display: grid;
-  gap: 20px;
+  gap: 18px;
 }
 
 .two-col {
   display: grid;
-  grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.75fr);
-  gap: 20px;
+  grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.75fr);
+  gap: 18px;
 }
 
 .stat-grid,
 .card-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
+  gap: 14px;
 }
 
 .auth-page,
@@ -161,13 +170,14 @@
   min-height: 100vh;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 980px) {
   .app-shell {
     padding-left: 0;
   }
 
   .sidebar {
     transform: translateX(-100%);
+    box-shadow: var(--shadow-card);
   }
 
   .sidebar.open {
@@ -184,7 +194,7 @@
   }
 
   .main-content {
-    padding: 20px 14px;
+    padding: 20px 14px 40px;
   }
 
   .two-col,

@@ -12,27 +12,31 @@
   <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
 </head>
 <body class="landing-page">
+  <header class="landing-topbar">
+    <a class="landing-brand" href="index.html" aria-label="Biblical Languages home">
+      <span class="brand-mark">Ω</span>
+      <span>Biblical Languages</span>
+    </a>
+    <a class="btn btn-ghost" href="login.html" aria-label="Open login page">Login</a>
+  </header>
   <main class="landing-hero">
     <div class="landing-inner">
-      <div class="icon-row">
-        <div class="brand-mark script-greek">Ω</div>
-        <div class="brand-mark hebrew-text">א</div>
-      </div>
+      <span class="pill">Scripture languages, structured for serious study</span>
       <h1 class="landing-title">Master the Languages of Scripture</h1>
       <p class="muted" id="landing-subtitle"></p>
       <section class="language-cards" id="language-cards" aria-label="Language selection"></section>
     </div>
   </main>
-  <section class="main-content">
-    <div class="card-grid">
+  <section class="landing-section">
+    <div class="feature-grid">
       <article class="card"><h2>Gamified Learning</h2><p class="muted">XP, streaks, quests, and leaderboards with a serious study tone.</p></article>
       <article class="card"><h2>Video Lessons</h2><p class="muted">Instructor-ready lessons support embedded teaching video.</p></article>
       <article class="card"><h2>Rich Vocabulary</h2><p class="muted">Searchable lexicon, favorites, and flashcard review.</p></article>
       <article class="card"><h2>Track Progress</h2><p class="muted">Worlds, milestones, badges, and language-scoped records.</p></article>
     </div>
-    <div class="card stage-space"><h2>Lesson Preview</h2><div class="lesson-dots"><span class="lesson-dot current">1</span><span class="lesson-dot locked">2</span><span class="lesson-dot locked">3</span><span class="lesson-dot locked">4</span><span class="lesson-dot locked">5</span></div></div>
+    <div class="card lesson-preview stage-space"><div class="section-title"><h2>Lesson Preview</h2><span class="tiny">A focused path, one step at a time</span></div><div class="lesson-dots"><span class="lesson-dot current">1</span><span class="lesson-dot locked">2</span><span class="lesson-dot locked">3</span><span class="lesson-dot locked">4</span><span class="lesson-dot locked">5</span></div></div>
   </section>
-  <footer class="main-content muted">Biblical Languages · <a href="login.html" aria-label="Open login page">Login</a> · <a href="https://github.com/" rel="noreferrer" aria-label="Open GitHub">GitHub</a></footer>
+  <footer class="landing-footer muted">Biblical Languages · <a href="login.html" aria-label="Open login page">Login</a> · <a href="https://github.com/" rel="noreferrer" aria-label="Open GitHub">GitHub</a></footer>
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <script type="module">
     import { LangManager, LANG_CONFIGS } from "./js/language-manager.js";
