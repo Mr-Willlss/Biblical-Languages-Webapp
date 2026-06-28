@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="en">
 <head>
@@ -38,7 +39,19 @@
   </section>
   <footer class="landing-footer muted">Biblical Languages · <a href="login.html" aria-label="Open login page">Login</a> · <a href="https://github.com/" rel="noreferrer" aria-label="Open GitHub">GitHub</a></footer>
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
-  <script type="module">
+  <script>
+  // Biblical Languages Firebase configuration
+  // Replace these placeholders with the Firebase Console web app credentials.
+  window.BLQ_FIREBASE_CONFIG = {
+    apiKey: "YOUR_ACTUAL_API_KEY",
+    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT_ID.firebasestorage.app",
+    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+    appId: "YOUR_APP_ID"
+  };
+</script>
+<script type="module">
     import { LangManager, LANG_CONFIGS } from "./js/language-manager.js";
     import { icon, renderIcons } from "./js/app.js";
     const cards = document.getElementById("language-cards");

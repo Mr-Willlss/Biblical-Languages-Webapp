@@ -1,32 +1,135 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function isOwner(uid) { return signedIn() && request.auth.uid == uid; }
+    function isAdmin() {
+      return signedIn()
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+
     match /users/{uid} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
-      match /progress_greek/{doc} {
-        allow read, write: if request.auth != null && request.auth.uid == uid;
+      allow read: if signedIn();
+      allow create: if isOwner(uid);
+      allow update: if isOwner(uid) || isAdmin();
+      allow delete: if false;
+
+      // Greek and Hebrew progress are separate — no cross-language collision
+      match /progress_greek/{lessonId} {
+        allow read, write: if isOwner(uid);
       }
-      match /progress_hebrew/{doc} {
-        allow read, write: if request.auth != null && request.auth.uid == uid;
+      match /progress_hebrew/{lessonId} {
+        allow read, write: if isOwner(uid);
       }
-      match /vocab_favorites/{doc} {
-        allow read, write: if request.auth != null && request.auth.uid == uid;
+      // Legacy progress path for backwards compatibility
+      match /progress/{lessonId} {
+        allow read, write: if isOwner(uid);
       }
-      match /notifications/{doc} {
-        allow read, write: if request.auth != null && request.auth.uid == uid;
+      match /lessonCompletions/{docId} {
+        allow read, write: if isOwner(uid);
+      }
+      match /private/{docId} {
+        allow read, write: if isOwner(uid);
+      }
+      match /activity/{activityId} {
+        allow read, write: if isOwner(uid);
+      }
+      match /vocab_favorites/{wordId} {
+        allow read, write: if isOwner(uid);
+      }
+      match /notifications/{notificationId} {
+        allow read: if isOwner(uid);
+        allow create: if signedIn()
+          && request.resource.data.fromUid == request.auth.uid
+          && request.resource.data.read == false;
+        allow update, delete: if isOwner(uid);
       }
     }
+
+    // Leaderboard: public reads for signed-in users; owner can write
     match /leaderboard/{uid} {
-      allow read: if request.auth != null;
-      allow write: if false;
+      allow read: if signedIn();
+      allow create, update: if isOwner(uid);
+      allow delete: if false;
     }
-    match /friendships/{docId} {
-      allow read, write: if request.auth != null && request.auth.uid in resource.data.users;
-      allow create: if request.auth != null && request.auth.uid in request.resource.data.users;
+
+    // Public activity feed
+    match /activities/{activityId} {
+      allow read: if signedIn();
+      allow create: if signedIn();
+      allow update, delete: if isAdmin();
     }
+
+    // Admin-managed study groups and announcements
+    match /study_groups/{groupId} {
+      allow read, write: if isAdmin();
+    }
+    match /announcements/{announcementId} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    // Study rooms
+    match /studyRooms/{roomId} {
+      allow create: if signedIn() && request.resource.data.host == request.auth.uid;
+      allow read, update: if signedIn() && request.auth.uid in resource.data.members;
+      allow delete: if signedIn() && resource.data.host == request.auth.uid;
+    }
+    // New project uses study_rooms (snake_case) — support both
     match /study_rooms/{roomId} {
-      allow read, write: if request.auth != null && request.auth.uid in resource.data.members;
-      allow create: if request.auth != null && request.auth.uid in request.resource.data.members;
+      allow create: if signedIn()
+        && request.resource.data.hostUid == request.auth.uid
+        && request.auth.uid in request.resource.data.memberUids;
+      allow read, update: if signedIn() && request.auth.uid in resource.data.memberUids;
+      allow delete: if signedIn() && resource.data.hostUid == request.auth.uid;
+    }
+
+    // Practice highscores
+    match /practiceScores/{scoreId} {
+      allow read: if signedIn();
+      allow create, update: if signedIn() && request.resource.data.uid == request.auth.uid;
+      allow delete: if false;
+    }
+
+    // Lesson content
+    match /lessons/{lessonId} {
+      allow read: if signedIn();
+    }
+
+    // Friendships and friend requests
+    match /friendships/{docId} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.auth.uid in request.resource.data.members;
+      allow update, delete: if signedIn() && request.auth.uid in resource.data.members;
+    }
+    match /friendRequests/{docId} {
+      allow read: if signedIn()
+        && (resource.data.fromUid == request.auth.uid
+            || resource.data.toUid == request.auth.uid);
+      allow create: if signedIn() && request.resource.data.fromUid == request.auth.uid;
+      allow delete: if signedIn()
+        && (resource.data.fromUid == request.auth.uid
+            || resource.data.toUid == request.auth.uid);
+    }
+
+    // Username reservation
+    match /usernames/{username} {
+      allow read: if signedIn();
+      allow create, update: if signedIn() && request.resource.data.uid == request.auth.uid;
+    }
+
+    // Gifts
+    match /gifts/{giftId} {
+      allow read: if signedIn()
+        && (resource.data.senderUid == request.auth.uid
+            || resource.data.recipientUid == request.auth.uid);
+      allow create: if signedIn();
+    }
+
+    // Lock down everything else
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

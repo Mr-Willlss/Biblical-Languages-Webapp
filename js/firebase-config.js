@@ -6,7 +6,9 @@ let auth = null;
 let db = null;
 
 async function initFirebase() {
-  if (!firebaseOptions?.apiKey) return { firebaseApp, auth, db, mode: "demo" };
+  if (!firebaseOptions?.apiKey || firebaseOptions.apiKey.startsWith("YOUR_")) {
+    return { firebaseApp, auth, db, mode: "demo" };
+  }
   const { initializeApp } = await import("https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js");
   const { getAuth } = await import("https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js");
   const { getFirestore } = await import("https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js");
