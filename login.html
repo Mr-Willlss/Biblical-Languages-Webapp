@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="en">
 <head>
@@ -19,6 +20,18 @@
     </section>
   </main>
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
-  <script type="module" src="js/login.js"></script>
+  <script>
+  // Biblical Languages Firebase configuration
+  // Replace these placeholders with the Firebase Console web app credentials.
+  window.BLQ_FIREBASE_CONFIG = {
+    apiKey: "YOUR_ACTUAL_API_KEY",
+    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT_ID.firebasestorage.app",
+    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+    appId: "YOUR_APP_ID"
+  };
+</script>
+<script type="module" src="js/login.js"></script>
 </body>
 </html>
