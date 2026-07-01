@@ -1,7 +1,7 @@
 import { LangManager, LANG_CONFIGS } from "./language-manager.js";
 import { icon, renderIcons, showToast } from "./app.js";
-import { registerWithEmail, signInWithEmail, signInWithGoogle } from "./auth.js?v=20260701-authfix";
-import { initFirebase } from "./firebase-config.js?v=20260701-authfix";
+import { registerWithEmail, signInWithEmail, signInWithGoogle } from "./auth.js?v=20260701-authfix2";
+import { initFirebase } from "./firebase-config.js?v=20260701-authfix2";
 
 let mode = "login";
 const form = document.getElementById("auth-form");
@@ -15,6 +15,14 @@ function setError(name, message) {
   wrapper?.classList.toggle("invalid", !!message);
   const error = wrapper?.querySelector(".field-error");
   if (error) error.textContent = message || "";
+}
+
+function showAuthNotice(message, type = "error") {
+  const notice = document.getElementById("auth-notice");
+  if (!notice) return;
+  notice.textContent = message || "";
+  notice.className = `auth-notice ${type}`;
+  notice.hidden = !message;
 }
 
 function renderForm() {
@@ -45,7 +53,11 @@ function renderForm() {
       await signInWithGoogle();
       window.location.replace("dashboard.html");
     } catch (error) {
-      showToast(error.code === "auth/popup-closed-by-user" ? "Google sign-in was cancelled." : (error.message || "Google sign-in failed."), "error");
+      const message = error.code === "auth/popup-closed-by-user"
+        ? "Google sign-in was cancelled."
+        : (error.message || "Google sign-in failed.");
+      showAuthNotice(`${message} (${error.code || "auth/unknown"})`);
+      showToast(message, "error");
     }
   });
   LangManager.applyTheme();
@@ -78,6 +90,8 @@ form.addEventListener("submit", async (event) => {
 });
 
 renderForm();
+showAuthNotice(sessionStorage.getItem("blq_auth_notice"));
+sessionStorage.removeItem("blq_auth_notice");
 
 async function resumeExistingSession() {
   try {

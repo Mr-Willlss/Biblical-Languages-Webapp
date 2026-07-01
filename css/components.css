@@ -610,6 +610,8 @@ select {
 .auth-page .tabs { width:100%; }
 .auth-page .tab-btn { flex:1; }
 .auth-page .btn { width:100%; }
+.auth-notice { margin-top:14px; border-left:4px solid var(--coral); background:#fff0ef; color:#8f2924; padding:11px 13px; font-size:.88rem; line-height:1.45; }
+.auth-notice[hidden] { display:none; }
 @media(max-width:640px) {
   html, body { overflow-x:hidden; }
   .game-home, .game-main, .mission-panel, .path-panel { width:100%; max-width:100%; min-width:0; }

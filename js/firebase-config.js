@@ -18,14 +18,20 @@ async function initFirebase() {
     const authSdk = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js");
     const storeSdk = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js");
     firebaseApp = appSdk.getApps().length ? appSdk.getApp() : appSdk.initializeApp(firebaseOptions);
-    auth = authSdk.getAuth(firebaseApp);
-    db = storeSdk.getFirestore(firebaseApp);
     try {
-      await authSdk.setPersistence(auth, authSdk.browserLocalPersistence);
+      auth = authSdk.initializeAuth(firebaseApp, {
+        persistence: [
+          authSdk.browserLocalPersistence,
+          authSdk.browserSessionPersistence,
+          authSdk.indexedDBLocalPersistence
+        ],
+        popupRedirectResolver: authSdk.browserPopupRedirectResolver
+      });
     } catch (error) {
-      console.warn("Firebase auth persistence fallback:", error);
-      await authSdk.setPersistence(auth, authSdk.browserSessionPersistence);
+      if (error?.code !== "auth/already-initialized") throw error;
+      auth = authSdk.getAuth(firebaseApp);
     }
+    db = storeSdk.getFirestore(firebaseApp);
     try {
       await storeSdk.enableMultiTabIndexedDbPersistence(db);
     } catch (error) {

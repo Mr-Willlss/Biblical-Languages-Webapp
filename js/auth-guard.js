@@ -1,5 +1,5 @@
 import { getDemoUser } from "./app.js";
-import { initFirebase } from "./firebase-config.js?v=20260701-authfix";
+import { initFirebase } from "./firebase-config.js?v=20260701-authfix2";
 
 async function requireAuth({ admin = false } = {}) {
   const state = await initFirebase();
@@ -9,7 +9,8 @@ async function requireAuth({ admin = false } = {}) {
       const unsubscribe = onAuthStateChanged(state.auth, (user) => {
         unsubscribe();
         if (!user) {
-          window.location.replace("login.html");
+          sessionStorage.setItem("blq_auth_notice", "Your sign-in session was not retained. Allow cookies and site storage for this site, then try again.");
+          window.location.replace("login.html?reason=session");
           return;
         }
         window.BLQ_CURRENT_USER = user;

@@ -1,6 +1,6 @@
 import { LangManager } from "./language-manager.js";
 import { getDemoUser, saveDemoUser, showToast } from "./app.js";
-import { initFirebase } from "./firebase-config.js?v=20260701-authfix";
+import { initFirebase } from "./firebase-config.js?v=20260701-authfix2";
 
 async function ensureUserDocument(user, extra = {}) {
   const state = await initFirebase();
@@ -53,6 +53,13 @@ async function signInWithGoogle() {
     const provider = new sdk.GoogleAuthProvider();
     provider.setCustomParameters({ prompt: "select_account" });
     const credential = await sdk.signInWithPopup(state.auth, provider);
+    await credential.user.getIdToken(true);
+    await state.auth.authStateReady();
+    if (!state.auth.currentUser?.uid || state.auth.currentUser.uid !== credential.user.uid) {
+      throw Object.assign(new Error("Your browser did not retain the Google session. Allow site storage and try again."), {
+        code: "auth/session-not-retained"
+      });
+    }
     await syncUserDocument(credential.user);
     return credential;
   }
