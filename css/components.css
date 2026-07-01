@@ -532,7 +532,7 @@ select {
 .rail-stat small { display:block; margin-top:3px; color:var(--text-muted); }
 
 .lesson-game { min-height:100vh; background:var(--ink); color:#fff; }
-.lesson-game-shell { width:min(760px,100%); min-height:100vh; margin:0 auto; display:grid; grid-template-rows:auto 1fr auto; padding:22px 24px 18px; }
+.lesson-game-shell { width:min(760px,100%); height:100dvh; min-height:0; overflow:hidden; margin:0 auto; display:grid; grid-template-rows:auto 1fr auto; padding:22px 24px 18px; }
 .game-top { display:grid; grid-template-columns:44px 1fr auto; align-items:center; gap:16px; }
 .game-close { border:0; background:transparent; color:#fff; cursor:pointer; }
 .game-close svg { width:28px; height:28px; }
@@ -559,6 +559,24 @@ select {
 .game-check { min-width:180px; min-height:52px; }
 .guide-button { position:fixed; right:18px; bottom:18px; z-index:5; }
 .lesson-guide { max-height:min(680px,85vh); overflow:auto; }
+.learn-shell { width:min(920px,100%); }
+.learn-counter { color:#9aa4a8; font-size:.8rem; font-weight:800; }
+.learn-stage { min-height:0; display:grid; align-content:center; justify-items:center; gap:18px; padding:24px 0; overflow:hidden; }
+.learn-stage h1 { max-width:760px; margin:0; font-family:Literata,Georgia,serif; font-size:clamp(1.8rem,4vw,2.8rem); line-height:1.16; text-align:center; }
+.learn-objective { max-width:650px; margin:0; color:#c2c9cc; font-size:1.12rem; line-height:1.65; text-align:center; }
+.learn-callout { width:min(620px,100%); display:grid; grid-template-columns:auto 1fr; gap:14px; border-left:4px solid var(--coral); background:#182125; padding:16px 18px; }
+.learn-callout strong { color:#60c5c0; text-transform:uppercase; font-size:.75rem; }
+.theory-panel { width:min(760px,100%); max-height:min(52vh,470px); overflow:auto; border:1px solid #424d51; background:#151d21; padding:24px; color:#e7ebec; font-size:1.02rem; line-height:1.7; scrollbar-width:thin; }
+.learn-video { width:min(620px,100%); aspect-ratio:16/9; overflow:hidden; border:1px solid #424d51; background:#050708; }
+.learn-video iframe { width:100%; height:100%; border:0; }
+.learn-words { width:min(760px,100%); display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.learn-word { min-width:0; display:grid; border:1px solid #424d51; background:#171f23; padding:10px 12px; }
+.learn-word strong { overflow:hidden; color:#fff; font-family:"GFS Neohellenic",Georgia,serif; font-size:1.35rem; text-overflow:ellipsis; white-space:nowrap; }
+.learn-word span, .learn-word small { overflow:hidden; color:#9fa8ac; text-overflow:ellipsis; white-space:nowrap; }
+.learn-word small { color:#60c5c0; }
+.learn-footer { grid-template-columns:auto 1fr; }
+.feedback { display:grid; gap:3px; }
+.feedback span { color:#b8c0c3; font-size:.84rem; font-weight:500; }
 .path-page { width:min(760px,100%); margin:0 auto; display:grid; gap:28px; }
 .path-page-head { display:flex; align-items:end; justify-content:space-between; gap:16px; padding:10px 0 4px; }
 .path-page-head h1 { margin:4px 0 0; font-family:Literata,serif; font-size:2.4rem; }
@@ -633,6 +651,16 @@ select {
   .game-footer { grid-template-columns:1fr; }
   .game-check { width:100%; }
   .guide-button { display:none; }
+  .learn-stage { align-content:start; gap:12px; padding:12px 0; }
+  .learn-stage h1 { font-size:1.65rem; }
+  .learn-objective { font-size:.96rem; line-height:1.5; }
+  .theory-panel { max-height:55vh; padding:16px; font-size:.94rem; line-height:1.55; }
+  .learn-video { width:min(100%,480px); }
+  .learn-words { grid-template-columns:repeat(2,1fr); }
+  .learn-word { padding:8px 9px; }
+  .learn-word strong { font-size:1.15rem; }
+  .learn-footer { grid-template-columns:1fr 1.4fr; }
+  .learn-footer .btn { min-width:0; padding-inline:10px; }
 }
 
 .exercise-option.correct {

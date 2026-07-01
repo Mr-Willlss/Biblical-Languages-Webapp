@@ -30,21 +30,15 @@ const LANG_CONFIGS = {
     accentSecondary: "#f59e0b",
     gradient: "linear-gradient(135deg, #d97706 0%, #f59e0b 100%)",
     dir: "rtl",
-    totalBeginner: 21,
-    totalFurther: 19,
+    totalBeginner: 24,
+    totalFurther: 0,
     corpus: "Old Testament",
     worlds: [
       { id: 1, name: "The Aleph-Bet", lessons: [1, 2, 3, 4, 5] },
       { id: 2, name: "Sounds & Vowels", lessons: [6, 7, 8, 9, 10] },
       { id: 3, name: "Words & Grammar", lessons: [11, 12, 13, 14, 15] },
       { id: 4, name: "Verbs & Sentences", lessons: [16, 17, 18, 19, 20] },
-      { id: 5, name: "Capstone Review", lessons: [21] }
-    ],
-    furtherWorlds: [
-      { id: 6, name: "Imperfect & Commands", lessons: [22, 23, 24, 25, 26] },
-      { id: 7, name: "Construct State", lessons: [27, 28, 29, 30] },
-      { id: 8, name: "Biblical Passages", lessons: [31, 32, 33, 34, 35] },
-      { id: 9, name: "Mastery", lessons: [36, 37, 38, 39, 40] }
+      { id: 5, name: "Review & Mastery", lessons: [21, 22, 23, 24] }
     ]
   }
 };
@@ -82,7 +76,7 @@ const LangManager = {
   },
 
   getMaxLesson() {
-    return this.isHebrew() ? 21 : 25;
+    return this.isHebrew() ? 24 : 25;
   },
 
   lessonKey(n) {

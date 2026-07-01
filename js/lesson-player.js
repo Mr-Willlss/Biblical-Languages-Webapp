@@ -21,6 +21,10 @@ let correct = 0;
 let selected = null;
 let ordered = [];
 let answered = false;
+let learnStep = 0;
+
+const theorySteps = splitTheory(lesson.description || lesson.summary || "");
+const learnSteps = ["overview", ...theorySteps.map((_, index) => `theory-${index}`), "media"];
 
 document.body.classList.add("lesson-game-active", "lesson-game");
 
@@ -31,6 +35,67 @@ function shuffle(array) {
     [next[i], next[j]] = [next[j], next[i]];
   }
   return next;
+}
+
+function splitTheory(text) {
+  const paragraphs = String(text).split(/\n\s*\n/).map((part) => part.trim()).filter(Boolean);
+  const chunks = [];
+  let currentChunk = "";
+  paragraphs.forEach((paragraph) => {
+    const parts = paragraph.length <= 900 ? [paragraph] : paragraph.split("\n").filter(Boolean);
+    parts.forEach((part) => {
+      const combined = currentChunk ? `${currentChunk}\n\n${part}` : part;
+      if (combined.length <= 1000) currentChunk = combined;
+      else {
+        if (currentChunk) chunks.push(currentChunk);
+        currentChunk = part;
+      }
+    });
+  });
+  if (currentChunk) chunks.push(currentChunk);
+  return chunks.length ? chunks : ["Review the lesson focus, then continue to practice."];
+}
+
+function youtubeEmbed(urlValue) {
+  const match = String(urlValue || "").match(/(?:youtu\.be\/|v=|embed\/)([\w-]{6,})/);
+  return match ? `https://www.youtube-nocookie.com/embed/${match[1]}` : "";
+}
+
+function renderLearn() {
+  const step = learnSteps[learnStep];
+  const isOverview = step === "overview";
+  const isMedia = step === "media";
+  const theoryIndex = step.startsWith("theory-") ? Number(step.split("-")[1]) : -1;
+  const embed = youtubeEmbed(lesson.videoUrl);
+  const progress = learnSteps.map((_, index) => `<span class="${index <= learnStep ? "done" : ""}"></span>`).join("");
+  const words = lesson.vocabulary.slice(0, 6).map((word) => `
+    <div class="learn-word ${word.lang === "hebrew" ? "hebrew-text" : ""}">
+      <strong>${safeText(word.script)}</strong><span>${safeText(word.transliteration || word.english)}</span><small>${safeText(word.english)}</small>
+    </div>`).join("");
+
+  root.innerHTML = `
+    <div class="lesson-game-shell learn-shell" style="--steps:${learnSteps.length}">
+      <header class="game-top">
+        <a class="game-close" href="dashboard.html" aria-label="Exit lesson">${icon("x")}</a>
+        <div class="game-progress" aria-label="Learning progress">${progress}</div>
+        <span class="learn-counter">${learnStep + 1}/${learnSteps.length}</span>
+      </header>
+      <main class="learn-stage">
+        ${isOverview ? `<span class="challenge-language">${cfg.label} · Lesson ${lesson.lesson}</span><h1>${safeText(lesson.title)}</h1><p class="learn-objective">${safeText(lesson.grammarNote || lesson.summary)}</p><div class="learn-callout"><strong>Goal</strong><span>${safeText(lesson.objectives?.[0] || lesson.summary)}</span></div>` : ""}
+        ${theoryIndex >= 0 ? `<span class="challenge-language">Learn the pattern · ${theoryIndex + 1} of ${theorySteps.length}</span><h1>${safeText(lesson.title)}</h1><div class="theory-panel ${lesson.lang === "hebrew" ? "hebrew-text" : ""}">${safeText(theorySteps[theoryIndex]).replace(/\n/g, "<br>")}</div>` : ""}
+        ${isMedia ? `<span class="challenge-language">Watch and recall</span><h1>Ready to put it together?</h1>${embed ? `<div class="learn-video"><iframe src="${embed}" title="${safeText(lesson.title)} video lesson" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>` : `<div class="learn-callout"><strong>Reading lesson</strong><span>This lesson has no video in the original course.</span></div>`}<div class="learn-words">${words}</div>` : ""}
+      </main>
+      <footer class="game-footer learn-footer">
+        <button class="btn btn-ghost" id="learn-skip" type="button">Skip to practice</button>
+        <button class="btn btn-primary game-check" id="learn-next" type="button">${isMedia ? "Start practice" : "Continue"}</button>
+      </footer>
+    </div>`;
+  document.getElementById("learn-skip").addEventListener("click", render);
+  document.getElementById("learn-next").addEventListener("click", () => {
+    if (learnStep < learnSteps.length - 1) { learnStep += 1; renderLearn(); }
+    else render();
+  });
+  renderIcons();
 }
 
 function buildSession(source) {
@@ -158,7 +223,7 @@ function checkAnswer() {
   document.querySelectorAll(".game-answer.selected").forEach((button) => button.classList.add(result ? "correct" : "incorrect"));
   const feedback = document.getElementById("feedback");
   feedback.className = `feedback ${result ? "correct" : "incorrect"}`;
-  feedback.textContent = result ? "Correct. +5 XP" : `Answer: ${expectedText({ ...exercise, answer: expected })}`;
+  feedback.innerHTML = `<strong>${result ? "Correct. +5 XP" : `Answer: ${safeText(expectedText({ ...exercise, answer: expected }))}`}</strong>${exercise.explanation ? `<span>${safeText(exercise.explanation)}</span>` : ""}`;
   const check = document.getElementById("game-check");
   check.disabled = false;
   check.textContent = current === exercises.length - 1 ? "Finish" : "Continue";
@@ -205,4 +270,4 @@ function openGuide() {
   showModal(lesson.title, `<div class="lesson-guide"><p>${summary}</p><div class="list section-gap">${words}</div></div>`, ["Return to game"]);
 }
 
-render();
+renderLearn();
