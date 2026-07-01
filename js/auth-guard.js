@@ -8,6 +8,10 @@ async function requireAuth({ admin = false } = {}) {
     return new Promise((resolve) => {
       onAuthStateChanged(state.auth, (user) => {
         if (!user) window.location.href = "login.html";
+        if (user) {
+          window.BLQ_CURRENT_USER = user;
+          localStorage.setItem("blq_last_uid", user.uid);
+        }
         resolve(user);
       });
     });

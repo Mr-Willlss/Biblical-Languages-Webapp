@@ -1,75 +1,15 @@
-
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="A gamified learning platform for the languages of Scripture.">
+  <meta name="description" content="Learn Koine Greek and Biblical Hebrew through short, game-based lessons.">
   <title>Biblical Languages</title>
-  <link rel="stylesheet" href="css/variables.css">
-  <link rel="stylesheet" href="css/base.css">
-  <link rel="stylesheet" href="css/components.css">
-  <link rel="stylesheet" href="css/animations.css">
   <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
 </head>
-<body class="landing-page">
-  <header class="landing-topbar">
-    <a class="landing-brand" href="index.html" aria-label="Biblical Languages home">
-      <span class="brand-mark">Ω</span>
-      <span>Biblical Languages</span>
-    </a>
-    <a class="btn btn-ghost" href="login.html" aria-label="Open login page">Login</a>
-  </header>
-  <main class="landing-hero">
-    <div class="landing-inner">
-      <span class="pill">Scripture languages, structured for serious study</span>
-      <h1 class="landing-title">Master the Languages of Scripture</h1>
-      <p class="muted" id="landing-subtitle"></p>
-      <section class="language-cards" id="language-cards" aria-label="Language selection"></section>
-    </div>
-  </main>
-  <section class="landing-section">
-    <div class="feature-grid">
-      <article class="card"><h2>Gamified Learning</h2><p class="muted">XP, streaks, quests, and leaderboards with a serious study tone.</p></article>
-      <article class="card"><h2>Video Lessons</h2><p class="muted">Instructor-ready lessons support embedded teaching video.</p></article>
-      <article class="card"><h2>Rich Vocabulary</h2><p class="muted">Searchable lexicon, favorites, and flashcard review.</p></article>
-      <article class="card"><h2>Track Progress</h2><p class="muted">Worlds, milestones, badges, and language-scoped records.</p></article>
-    </div>
-    <div class="card lesson-preview stage-space"><div class="section-title"><h2>Lesson Preview</h2><span class="tiny">A focused path, one step at a time</span></div><div class="lesson-dots"><span class="lesson-dot current">1</span><span class="lesson-dot locked">2</span><span class="lesson-dot locked">3</span><span class="lesson-dot locked">4</span><span class="lesson-dot locked">5</span></div></div>
-  </section>
-  <footer class="landing-footer muted">Biblical Languages · <a href="login.html" aria-label="Open login page">Login</a> · <a href="https://github.com/" rel="noreferrer" aria-label="Open GitHub">GitHub</a></footer>
-  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
-  <script>
-  // Biblical Languages Firebase configuration
-  // Replace these placeholders with the Firebase Console web app credentials.
-  window.BLQ_FIREBASE_CONFIG = {
-    apiKey: "YOUR_ACTUAL_API_KEY",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.firebasestorage.app",
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    appId: "YOUR_APP_ID"
-  };
-</script>
-<script type="module">
-    import { LangManager, LANG_CONFIGS } from "./js/language-manager.js";
-    import { icon, renderIcons } from "./js/app.js";
-    const cards = document.getElementById("language-cards");
-    const languages = Object.values(LANG_CONFIGS);
-    document.getElementById("landing-subtitle").textContent =
-      `Learn ${languages.map((cfg) => cfg.label).join(" and ")} through gamified, structured lessons designed for seminary students and Bible translators.`;
-    cards.innerHTML = languages.map((cfg) => `
-      <button class="language-card" type="button" data-lang="${cfg.lang}" aria-label="Start ${cfg.label}">
-        <div class="${cfg.lang === "hebrew" ? "hebrew-text" : "script-greek"} script-mark">${cfg.logo}</div>
-        <h2>${cfg.label}</h2>
-        <p class="muted">${cfg.totalBeginner + cfg.totalFurther} lessons · ${cfg.corpus}</p>
-        <span class="btn btn-primary">${icon("arrow-right", `Start ${cfg.shortLabel}`)}</span>
-      </button>`).join("");
-    cards.querySelectorAll("[data-lang]").forEach((button) => button.addEventListener("click", () => {
-      LangManager.set(button.dataset.lang, false);
-      window.location.href = "login.html";
-    }));
-    renderIcons();
-  </script>
+<body>
+  <p>Opening Biblical Languages...</p>
+  <script src="js/firebase-env.js"></script>
+  <script>window.location.replace("dashboard.html");</script>
 </body>
 </html>

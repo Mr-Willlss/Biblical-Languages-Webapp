@@ -2,11 +2,29 @@ import { LangManager } from "./language-manager.js";
 import { getDemoUser, saveDemoUser, showToast } from "./app.js";
 import { initFirebase } from "./firebase-config.js";
 
+async function ensureUserDocument(user, extra = {}) {
+  const state = await initFirebase();
+  if (state.mode !== "firebase") return;
+  const sdk = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js");
+  await sdk.setDoc(sdk.doc(state.db, "users", user.uid), {
+    uid: user.uid,
+    displayName: user.displayName || extra.displayName || "Language Learner",
+    email: user.email || "",
+    photoURL: user.photoURL || "",
+    activeLanguage: extra.language || LangManager.get(),
+    role: "student",
+    lastActiveAt: sdk.serverTimestamp(),
+    createdAt: sdk.serverTimestamp()
+  }, { merge: true });
+}
+
 async function signInWithEmail(email, password) {
   const state = await initFirebase();
   if (state.mode === "firebase") {
-    const { signInWithEmailAndPassword } = await import("https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js");
-    return signInWithEmailAndPassword(state.auth, email, password);
+    const sdk = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js");
+    const credential = await sdk.signInWithEmailAndPassword(state.auth, email, password);
+    await ensureUserDocument(credential.user);
+    return credential;
   }
   const user = { ...getDemoUser(), email };
   saveDemoUser(user);
@@ -17,22 +35,10 @@ async function registerWithEmail({ displayName, email, password, language }) {
   const state = await initFirebase();
   LangManager.set(language, false);
   if (state.mode === "firebase") {
-    const { createUserWithEmailAndPassword, updateProfile } = await import("https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js");
-    const { doc, serverTimestamp, setDoc } = await import("https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js");
-    const credential = await createUserWithEmailAndPassword(state.auth, email, password);
-    await updateProfile(credential.user, { displayName });
-    await setDoc(doc(state.db, "users", credential.user.uid), {
-      displayName,
-      email,
-      language,
-      role: "student",
-      xp_greek: 0,
-      xp_hebrew: 0,
-      xp_total: 0,
-      streak: 0,
-      level: 1,
-      createdAt: serverTimestamp()
-    });
+    const sdk = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js");
+    const credential = await sdk.createUserWithEmailAndPassword(state.auth, email, password);
+    await sdk.updateProfile(credential.user, { displayName });
+    await ensureUserDocument(credential.user, { displayName, language });
     return credential;
   }
   const user = { ...getDemoUser(), displayName, email, language };
@@ -43,21 +49,25 @@ async function registerWithEmail({ displayName, email, password, language }) {
 async function signInWithGoogle() {
   const state = await initFirebase();
   if (state.mode === "firebase") {
-    const { GoogleAuthProvider, signInWithPopup } = await import("https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js");
-    return signInWithPopup(state.auth, new GoogleAuthProvider());
+    const sdk = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js");
+    const provider = new sdk.GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: "select_account" });
+    const credential = await sdk.signInWithPopup(state.auth, provider);
+    await ensureUserDocument(credential.user);
+    return credential;
   }
-  showToast("Demo sign-in is active. Connect Firebase config when you deploy.", "info");
+  showToast("Demo mode is active until Firebase web credentials are added.", "info");
   return { user: getDemoUser() };
 }
 
 async function signOutUser() {
   const state = await initFirebase();
   if (state.mode === "firebase") {
-    const { signOut } = await import("https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js");
-    await signOut(state.auth);
+    const sdk = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js");
+    await sdk.signOut(state.auth);
   }
   window.location.href = "login.html";
 }
 
 window.BLQAuth = { registerWithEmail, signInWithEmail, signInWithGoogle, signOutUser };
-export { registerWithEmail, signInWithEmail, signInWithGoogle, signOutUser };
+export { ensureUserDocument, registerWithEmail, signInWithEmail, signInWithGoogle, signOutUser };

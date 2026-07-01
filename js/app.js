@@ -152,14 +152,20 @@ function sidebarLink(href, page, iconName, label) {
 
 const MOBILE_NAV_ITEMS = [
   { href: "dashboard.html", page: "dashboard", iconName: "home", label: "Home" },
-  { href: "lesson-player.html", page: "lesson-player", iconName: "play-circle", label: "Learn" },
+  { href: "lessons.html", page: "lessons", iconName: "map", label: "Path" },
   { href: "practice.html", page: "practice", iconName: "target", label: "Review" },
   { href: "quests.html", page: "quests", iconName: "sparkles", label: "Quests" },
   { href: "profile.html", page: "profile", iconName: "user-round", label: "Me" }
 ];
 
-function renderAppShell({ page, title, mountId = "page-root" }) {
-  const user = getDemoUser();
+function renderAppShell({ page, title, mountId = "page-root", currentUser = null }) {
+  const sourceUser = currentUser || window.BLQ_CURRENT_USER || getDemoUser();
+  const user = {
+    ...getDemoUser(),
+    ...sourceUser,
+    displayName: sourceUser.displayName || getDemoUser().displayName,
+    role: sourceUser.role || getDemoUser().role
+  };
   const activeLang = LangManager.getConfig();
   const level = getLevelFromXP(user.xp_total);
   document.body.classList.add("has-app-shell");
@@ -174,20 +180,11 @@ function renderAppShell({ page, title, mountId = "page-root" }) {
           </div>
         </div>
         <nav class="sb-nav">
-          <div class="sb-section-label">MAIN</div>
-          ${sidebarLink("dashboard.html", "dashboard", "layout-dashboard", "Dashboard")}
-          ${sidebarLink("practice.html", "practice", "target", "Practice")}
-          ${sidebarLink("lessons.html", "lessons", "list-checks", "Lessons")}
-          ${sidebarLink("quests.html", "quests", "swords", "Quests")}
-          ${sidebarLink("admin.html", "admin", "settings", "Admin")}
-          <div class="sb-section-label">LEARN</div>
-          ${sidebarLink("vocabulary.html", "vocabulary", "book-open", "Vocabulary")}
-          ${sidebarLink("leaderboard.html", "leaderboard", "trophy", "Leaderboard")}
-          ${sidebarLink("rewards.html", "rewards", "gift", "Rewards")}
-          <div class="sb-section-label">SOCIAL</div>
-          ${sidebarLink("friends.html", "friends", "users", "Friends")}
-          ${sidebarLink("study-room.html", "study-room", "messages-square", "Study Room")}
-          <div class="sb-section-label">ACCOUNT</div>
+          ${sidebarLink("dashboard.html", "dashboard", "home", "Home")}
+          ${sidebarLink("lessons.html", "lessons", "map", "Path")}
+          ${sidebarLink("practice.html", "practice", "swords", "Practice")}
+          ${sidebarLink("quests.html", "quests", "sparkles", "Quests")}
+          ${sidebarLink("leaderboard.html", "leaderboard", "trophy", "League")}
           ${sidebarLink("profile.html", "profile", "user-round", "Profile")}
         </nav>
         <div class="sb-lang-switcher">
@@ -202,10 +199,10 @@ function renderAppShell({ page, title, mountId = "page-root" }) {
           <h1>${title}</h1>
         </div>
         <div class="top-actions">
-          <span class="pill">${icon("flame", formatStreak(user.streak))}</span>
-          <span class="pill">${icon("heart", user.hearts || 5)}</span>
-          <button class="icon-btn" type="button" aria-label="Notifications">${icon("bell")}</button>
-          <a class="pill" href="profile.html" aria-label="Open profile">${icon("circle-user-round", `${user.displayName} · L${level.level}`)}</a>
+          <span class="status-item">${icon("flame", formatStreak(user.streak))}</span>
+          <span class="status-item">${icon("heart", user.hearts || 5)}</span>
+          <span class="status-item gems-pill">${icon("gem", user.gems || 245)}</span>
+          <a class="profile-pill" href="profile.html" aria-label="Open profile">${icon("circle-user-round", `${user.displayName} · L${level.level}`)}</a>
         </div>
       </header>
       <main class="main-content" id="${mountId}"></main>
@@ -217,7 +214,6 @@ function renderAppShell({ page, title, mountId = "page-root" }) {
   document.querySelectorAll(".sb-link").forEach((link) => {
     link.classList.toggle("active", link.dataset.page === page);
   });
-  if (user.role !== "admin") document.querySelector(".sb-link[data-page='admin']")?.remove();
   document.querySelector(".mobile-menu")?.addEventListener("click", () => document.getElementById("sidebar")?.classList.toggle("open"));
   document.querySelectorAll("[data-lang-button]").forEach((button) => {
     button.addEventListener("click", () => LangManager.set(button.dataset.langButton));

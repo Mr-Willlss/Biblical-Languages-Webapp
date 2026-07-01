@@ -1,5 +1,6 @@
 import { LangManager } from "./language-manager.js";
-import { icon, renderAppShell, renderIcons, showCelebration, showToast, showXPPopup } from "./app.js";
+import { icon, renderAppShell, renderIcons, safeText, showCelebration, showModal, showXPPopup } from "./app.js";
+import { requireAuth } from "./auth-guard.js";
 import { ProgressManager } from "./progress-manager.js";
 import { getLessons } from "./data-loader.js";
 
@@ -7,146 +8,201 @@ const url = new URL(window.location.href);
 const requestedLang = url.searchParams.get("lang");
 if (requestedLang && requestedLang !== LangManager.get()) LangManager.set(requestedLang, false);
 const lessonNum = Number(url.searchParams.get("lesson") || 1);
-const { user, root } = renderAppShell({ page: "lessons", title: "Lesson Player" });
+const signedInUser = await requireAuth();
+const { user, root } = renderAppShell({ page: "lessons", title: "Lesson", currentUser: signedInUser });
+await ProgressManager.init(user.uid);
 const lessons = await getLessons();
 const lesson = lessons.find((item) => item.lesson === lessonNum) || lessons[0];
 const cfg = LangManager.getConfig();
-const sessionExercises = buildExerciseSession(lesson);
+const exercises = buildSession(lesson);
 let hearts = 5;
 let current = 0;
 let correct = 0;
+let selected = null;
+let ordered = [];
+let answered = false;
 
-function shuffleArray(array) {
-  const arr = [...array];
-  for (let i = arr.length - 1; i > 0; i -= 1) {
+document.body.classList.add("lesson-game-active", "lesson-game");
+
+function shuffle(array) {
+  const next = [...array];
+  for (let i = next.length - 1; i > 0; i -= 1) {
     const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
+    [next[i], next[j]] = [next[j], next[i]];
   }
-  return arr;
+  return next;
 }
 
-function buildExerciseSession(sourceLesson) {
-  return shuffleArray(sourceLesson.exercises).map((exercise) => {
-    if (exercise.pool?.length) {
-      const variant = exercise.pool[Math.floor(Math.random() * exercise.pool.length)];
-      return { ...exercise, ...variant };
-    }
-    return exercise;
+function buildSession(source) {
+  return shuffle(source.exercises).map((exercise) => {
+    if (!exercise.pool?.length) return exercise;
+    return { ...exercise, ...exercise.pool[Math.floor(Math.random() * exercise.pool.length)] };
   });
 }
 
-function extractYouTubeId(value) {
-  const match = value.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))([^&?/\s]{11})/);
-  return match ? match[1] : null;
+function expectedText(exercise) {
+  if (Array.isArray(exercise.answer)) return exercise.answer.join(" ");
+  if (typeof exercise.answer === "boolean") return exercise.answer ? "True" : "False";
+  return String(exercise.answer ?? "Review the model answer.");
 }
 
-function renderVideo() {
-  if (lesson.videoUrl?.trim()) {
-    const videoId = extractYouTubeId(lesson.videoUrl);
-    return `<div class="video-wrapper"><iframe src="https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1" title="${lesson.title}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`;
-  }
-  return `<div class="video-placeholder"><div><span class="video-icon">${icon("clapperboard")}</span><p>Video lesson coming soon</p><span class="muted">Proceed to the exercises below to practise this lesson.</span></div></div>`;
-}
-
-function renderKeyboard() {
-  if (!LangManager.isHebrew()) return "";
-  return `<div class="hebrew-keyboard" aria-label="On-screen script keyboard">${"אבגדהוזחטיכלמנסעפצקרשת".split("").map((letter) => `<button class="hebrew-key" type="button" aria-label="Type ${letter}">${letter}</button>`).join("")}</div>`;
-}
-
-function isAnswerCorrect(value, expected) {
+function isCorrect(value, expected) {
   if (Array.isArray(expected)) return JSON.stringify(value) === JSON.stringify(expected);
-  return String(value).trim().toLowerCase() === String(expected).trim().toLowerCase();
+  return String(value).trim().toLocaleLowerCase() === String(expected).trim().toLocaleLowerCase();
 }
 
-function answerExercise(value, button) {
-  const exercise = sessionExercises[current];
-  const isCorrect = isAnswerCorrect(value, exercise.answer);
-  if (isCorrect) {
-    correct += 1;
-    button?.classList.add("correct");
-    showXPPopup(5, window.innerWidth / 2, window.innerHeight / 2);
-  } else {
-    hearts -= 1;
-    button?.classList.add("incorrect");
-    showToast("Not quite. Read the form once more and try the next one.", "warning");
+function heartIcons() {
+  return Array.from({ length: 5 }, (_, index) => index < hearts ? icon("heart") : icon("heart-off")).join("");
+}
+
+function progressBars() {
+  return exercises.map((_, index) => `<span class="${index <= current ? "done" : ""}"></span>`).join("");
+}
+
+function choiceMarkup(exercise) {
+  if (exercise.options?.length) {
+    return `<div class="answer-grid">${exercise.options.map((option, index) => `
+      <button class="game-answer" type="button" data-choice="${index}" aria-label="Answer ${safeText(option)}">
+        <span class="answer-script">${safeText(option)}</span>
+      </button>`).join("")}</div>`;
   }
-  setTimeout(() => {
-    if (hearts <= 0) {
-      showToast("The lesson reset. Review the notes and begin again.", "error");
-      hearts = 5;
-      current = 0;
-      correct = 0;
-    } else if (current < sessionExercises.length - 1) current += 1;
-    else completeLesson();
-    renderPractice();
-  }, 650);
-}
-
-function completeLesson() {
-  const stars = hearts >= 5 ? 3 : hearts >= 3 ? 2 : 1;
-  const result = ProgressManager.completeLesson(user.uid, lesson.lesson, { xp: lesson.xp, stars, title: lesson.title });
-  showCelebration(stars);
-  if (result.firstCompletion) showToast(`${lesson.xp} XP awarded for first completion.`, "success");
-}
-
-function renderPractice() {
-  const exercise = sessionExercises[current];
-  const mount = document.getElementById("exercise-mount");
-  if (!mount) return;
-  const promptClass = exercise.rtl ? "exercise-hebrew" : "";
-  let body = "";
-  if (exercise.options) {
-    body = exercise.options.map((option) => `<button class="exercise-option" type="button" data-answer="${option}" aria-label="Answer ${option}">${option}</button>`).join("");
-  } else if (exercise.type === "matching") {
-    body = exercise.pairs.map(([a, b]) => `<div class="list-row"><span class="${exercise.rtl ? "hebrew-text" : ""}">${a}</span><strong>${b}</strong></div>`).join("") + `<button class="btn btn-primary" type="button" data-answer="true" aria-label="Submit matching">${icon("check", "Submit")}</button>`;
-  } else if (exercise.type === "ordering") {
-    body = `<p class="muted">${exercise.items.join(" · ")}</p><button class="btn btn-primary" type="button" data-answer='${JSON.stringify(exercise.answer)}' aria-label="Submit ordering">${icon("check", "Submit")}</button>`;
-  } else if (exercise.type === "true_false") {
-    body = `<button class="exercise-option" type="button" data-answer="true" aria-label="True">True</button><button class="exercise-option" type="button" data-answer="false" aria-label="False">False</button>`;
-  } else {
-    body = `<div class="field"><input id="typed-answer" aria-label="Typed answer" placeholder="Type your answer"></div>${renderKeyboard()}<button class="btn btn-primary" type="button" id="submit-typed" aria-label="Submit typed answer">${icon("check", "Submit")}</button>`;
+  if (exercise.type === "true_false") {
+    return `<div class="answer-grid">
+      <button class="game-answer" type="button" data-value="true">True</button>
+      <button class="game-answer" type="button" data-value="false">False</button>
+    </div>`;
   }
-  mount.innerHTML = `
-    <div class="section-title"><h3>Exercise ${current + 1} of ${sessionExercises.length}</h3><span class="pill">${icon("heart", hearts)}</span></div>
-    <p class="${promptClass}">${exercise.prompt}</p>
-    <div class="list">${body}</div>`;
-  mount.querySelectorAll("[data-answer]").forEach((button) => {
-    button.addEventListener("click", () => {
-      const value = button.dataset.answer.startsWith("[") ? JSON.parse(button.dataset.answer) : button.dataset.answer;
-      answerExercise(value, button);
-    });
-  });
-  mount.querySelector("#submit-typed")?.addEventListener("click", () => answerExercise(mount.querySelector("#typed-answer").value, mount.querySelector("#submit-typed")));
-  mount.querySelectorAll(".hebrew-key").forEach((key) => {
-    key.addEventListener("click", () => {
-      const input = mount.querySelector("#typed-answer");
-      input.value += key.textContent;
-      input.focus();
-    });
-  });
+  if (exercise.type === "ordering") {
+    return `<div class="ordering-game">
+      <div class="order-preview" id="order-preview">Choose words in order</div>
+      <div class="answer-grid">${shuffle(exercise.items).map((item, index) => `<button class="game-answer order-word" type="button" data-order="${index}" data-word="${safeText(item)}">${safeText(item)}</button>`).join("")}</div>
+    </div>`;
+  }
+  if (exercise.type === "matching") {
+    return `<div class="answer-grid">${exercise.pairs.map(([left, right]) => `<div class="game-answer"><span class="answer-script">${safeText(left)}</span>${safeText(right)}</div>`).join("")}</div>`;
+  }
+  return `<input class="typed-answer" id="typed-answer" autocomplete="off" aria-label="Type your answer" placeholder="Type your answer">`;
+}
+
+function render() {
+  const exercise = exercises[current];
+  selected = null;
+  ordered = [];
+  answered = false;
+  root.innerHTML = `
+    <div class="lesson-game-shell" style="--steps:${exercises.length}">
+      <header class="game-top">
+        <a class="game-close" href="dashboard.html" aria-label="Exit lesson">${icon("x")}</a>
+        <div class="game-progress" aria-label="Lesson progress">${progressBars()}</div>
+        <div class="game-hearts" aria-label="${hearts} hearts">${heartIcons()}</div>
+      </header>
+      <main class="challenge-stage">
+        <span class="challenge-count">${current + 1} of ${exercises.length}</span>
+        <span class="challenge-language">${cfg.label}</span>
+        <h1 class="challenge-prompt ${exercise.rtl ? "hebrew-text" : ""}">${safeText(exercise.prompt)}</h1>
+        ${choiceMarkup(exercise)}
+      </main>
+      <footer class="game-footer">
+        <div class="feedback" id="feedback" role="status"></div>
+        <button class="btn btn-primary game-check" id="game-check" type="button" disabled>Check</button>
+      </footer>
+    </div>
+    <button class="icon-btn guide-button" id="guide-button" type="button" aria-label="Open lesson guide">${icon("book-open")}</button>`;
+
+  const check = document.getElementById("game-check");
+  document.querySelectorAll("[data-choice]").forEach((button) => button.addEventListener("click", () => {
+    if (answered) return;
+    document.querySelectorAll(".game-answer").forEach((item) => item.classList.remove("selected"));
+    button.classList.add("selected");
+    selected = exercise.options[Number(button.dataset.choice)];
+    check.disabled = false;
+  }));
+  document.querySelectorAll("[data-value]").forEach((button) => button.addEventListener("click", () => {
+    if (answered) return;
+    document.querySelectorAll(".game-answer").forEach((item) => item.classList.remove("selected"));
+    button.classList.add("selected");
+    selected = button.dataset.value === "true";
+    check.disabled = false;
+  }));
+  document.querySelectorAll("[data-order]").forEach((button) => button.addEventListener("click", () => {
+    if (answered || button.disabled) return;
+    button.disabled = true;
+    button.classList.add("selected");
+    ordered.push(button.dataset.word);
+    document.getElementById("order-preview").textContent = ordered.join(" · ");
+    check.disabled = ordered.length !== exercise.items.length;
+  }));
+  const typed = document.getElementById("typed-answer");
+  typed?.addEventListener("input", () => { check.disabled = !typed.value.trim(); });
+  if (exercise.type === "matching") {
+    selected = true;
+    check.disabled = false;
+  }
+  check.addEventListener("click", () => answered ? advance() : checkAnswer());
+  document.getElementById("guide-button").addEventListener("click", openGuide);
   renderIcons();
 }
 
-const summaryParagraphs = lesson.summary.split("\n\n");
+function checkAnswer() {
+  const exercise = exercises[current];
+  const value = exercise.type === "ordering" ? ordered : document.getElementById("typed-answer")?.value ?? selected;
+  const expected = exercise.type === "matching" && exercise.answer == null ? true : exercise.answer;
+  const result = isCorrect(value, expected);
+  answered = true;
+  if (result) {
+    correct += 1;
+    showXPPopup(5);
+  } else {
+    hearts = Math.max(0, hearts - 1);
+  }
+  document.querySelectorAll(".game-answer.selected").forEach((button) => button.classList.add(result ? "correct" : "incorrect"));
+  const feedback = document.getElementById("feedback");
+  feedback.className = `feedback ${result ? "correct" : "incorrect"}`;
+  feedback.textContent = result ? "Correct. +5 XP" : `Answer: ${expectedText({ ...exercise, answer: expected })}`;
+  const check = document.getElementById("game-check");
+  check.disabled = false;
+  check.textContent = current === exercises.length - 1 ? "Finish" : "Continue";
+}
 
-root.innerHTML = `
-  <div class="page-grid">
-    <section class="hero-card"><p class="muted"><span data-lang-label></span> · Lesson ${lesson.lesson}</p><h2>${lesson.title}</h2><p>${summaryParagraphs[0]}</p></section>
-    <section class="two-col">
-      <article class="card">
-        <div class="section-title"><h2>Learn</h2><span class="pill">${lesson.xp} XP</span></div>
-        ${renderVideo()}
-        <h3>Objectives</h3>
-        <div class="list">${lesson.objectives.map((objective) => `<div class="list-row">${icon("check-circle", objective)}</div>`).join("")}</div>
-        <h3>Lesson Notes</h3>
-        <div class="list">${summaryParagraphs.map((paragraph) => `<p class="muted">${paragraph}</p>`).join("")}</div>
-        ${lesson.grammarNotes ? `<h3>Grammar Notes</h3><div class="list">${lesson.grammarNotes.map((note) => `<div class="list-row"><div><strong>${note.rule}</strong><p class="muted">${note.explanation}</p><p class="${cfg.lang === "hebrew" ? "hebrew-text" : ""}">${note.example}</p></div></div>`).join("")}</div>` : ""}
-        <h3>Examples</h3>
-        <div class="list">${lesson.examples.map((example) => `<div class="list-row"><div><div class="${cfg.lang === "hebrew" ? "hebrew-text" : "script-greek"}">${example.script}</div><strong>${example.transliteration}</strong><p class="muted">${example.english}</p></div></div>`).join("")}</div>
-      </article>
-      <article class="card" id="exercise-mount"></article>
-    </section>
-  </div>`;
-LangManager.applyTheme();
-renderPractice();
-renderIcons();
+function advance() {
+  if (hearts === 0) {
+    hearts = 5;
+    current = 0;
+    correct = 0;
+    render();
+    return;
+  }
+  if (current < exercises.length - 1) {
+    current += 1;
+    render();
+    return;
+  }
+  finish();
+}
+
+function finish() {
+  const score = Math.round((correct / exercises.length) * 100);
+  const stars = score >= 90 ? 3 : score >= 70 ? 2 : 1;
+  const result = ProgressManager.completeLesson(user.uid, lesson.lesson, { xp: lesson.xp, stars, title: lesson.title });
+  showCelebration(stars);
+  root.innerHTML = `
+    <div class="lesson-game-shell completion-screen">
+      <main class="challenge-stage">
+        <span class="challenge-language">Lesson complete</span>
+        <h1 class="challenge-prompt">${score}% mastery</h1>
+        <div class="completion-stars">${"★".repeat(stars)}${"☆".repeat(3 - stars)}</div>
+        <p>${result.firstCompletion ? `+${lesson.xp} XP earned` : "Practice complete · XP already awarded"}</p>
+        <a class="btn btn-primary game-check" href="dashboard.html">${icon("home", "Back home")}</a>
+      </main>
+    </div>`;
+  renderIcons();
+}
+
+function openGuide() {
+  const summary = safeText(lesson.summary || lesson.description || "").split("\n").slice(0, 3).join("<br>");
+  const words = (lesson.examples || lesson.vocabulary || []).slice(0, 4)
+    .map((item) => `<div class="list-row"><strong>${safeText(item.script)}</strong><span>${safeText(item.english)}</span></div>`).join("");
+  showModal(lesson.title, `<div class="lesson-guide"><p>${summary}</p><div class="list section-gap">${words}</div></div>`, ["Return to game"]);
+}
+
+render();

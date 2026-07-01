@@ -40,8 +40,12 @@ function renderForm() {
     });
   });
   document.getElementById("google-auth")?.addEventListener("click", async () => {
-    await signInWithGoogle();
-    window.location.href = "dashboard.html";
+    try {
+      await signInWithGoogle();
+      window.location.href = "dashboard.html";
+    } catch (error) {
+      showToast(error.code === "auth/popup-closed-by-user" ? "Google sign-in was cancelled." : (error.message || "Google sign-in failed."), "error");
+    }
   });
   LangManager.applyTheme();
   renderIcons();

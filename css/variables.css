@@ -1,45 +1,43 @@
 :root {
-  --bg-primary: #090b10;
-  --bg-secondary: #0f131b;
-  --bg-tertiary: #151b26;
-  --bg-card: #121722;
-  --bg-card-soft: #171d2a;
-  --bg-hover: #1d2533;
-
-  --text-primary: #f4f0e8;
-  --text-secondary: #b8c0d0;
-  --text-muted: #7e8799;
-
-  --greek-primary: #7c68ee;
-  --greek-secondary: #5aa7ff;
-  --greek-gradient: linear-gradient(135deg, #8b7cf6 0%, #5aa7ff 100%);
-
-  --hebrew-primary: #c9862e;
-  --hebrew-secondary: #f0c36a;
-  --hebrew-gradient: linear-gradient(135deg, #d99a35 0%, #f0c36a 100%);
-
+  --ink: #10171b;
+  --ink-soft: #172126;
+  --paper: #f7f8f6;
+  --surface: #ffffff;
+  --surface-soft: #f0f3f1;
+  --text-primary: #172024;
+  --text-secondary: #566166;
+  --text-muted: #7b8589;
+  --coral: #f0524d;
+  --coral-dark: #d9433f;
+  --teal: #147a78;
+  --teal-soft: #dff1ef;
+  --mustard: #c88a12;
+  --violet: #6750a4;
+  --success: #39834a;
+  --error: #c83d3d;
+  --warning: #c88a12;
+  --xp-gold: #c88a12;
+  --greek-primary: var(--teal);
+  --greek-secondary: #28a09c;
+  --hebrew-primary: #b56f13;
+  --hebrew-secondary: #dd9d2d;
   --lang-primary: var(--greek-primary);
   --lang-secondary: var(--greek-secondary);
-  --lang-gradient: var(--greek-gradient);
-
-  --success: #3ecf8e;
-  --error: #ff6b6b;
-  --warning: #f0b84d;
-  --xp-gold: #f2c94c;
-
-  --border: rgba(220, 229, 245, 0.1);
-  --border-active: rgba(220, 229, 245, 0.22);
-  --focus-ring: rgba(139, 124, 246, 0.42);
-
-  --radius-sm: 8px;
-  --radius-md: 10px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
-
-  --shadow-card: 0 16px 44px rgba(0, 0, 0, 0.22);
-  --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.18);
-  --shadow-glow: 0 0 0 1px color-mix(in srgb, var(--lang-primary), transparent 68%);
-
-  --sidebar-width: 236px;
-  --topbar-height: 68px;
+  --bg-primary: var(--paper);
+  --bg-secondary: var(--surface);
+  --bg-tertiary: var(--surface-soft);
+  --bg-card: var(--surface);
+  --bg-card-soft: var(--surface-soft);
+  --bg-hover: #e9eeeb;
+  --border: #d9dfdc;
+  --border-active: #aeb8b3;
+  --focus-ring: rgba(20, 122, 120, 0.34);
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 8px;
+  --radius-xl: 8px;
+  --shadow-card: 0 18px 50px rgba(19, 31, 34, 0.12);
+  --shadow-soft: 0 5px 18px rgba(19, 31, 34, 0.07);
+  --sidebar-width: 224px;
+  --topbar-height: 66px;
 }

@@ -11,8 +11,11 @@ service cloud.firestore {
 
     match /users/{uid} {
       allow read: if signedIn();
-      allow create: if isOwner(uid);
-      allow update: if isOwner(uid) || isAdmin();
+      allow create: if isOwner(uid) && request.resource.data.get("role", "student") == "student";
+      allow update: if (isOwner(uid)
+          && request.resource.data.get("role", "student") == resource.data.get("role", "student")
+          && request.resource.data.get("isAdmin", false) == resource.data.get("isAdmin", false))
+        || isAdmin();
       allow delete: if false;
 
       // Greek and Hebrew progress are separate — no cross-language collision
@@ -50,14 +53,14 @@ service cloud.firestore {
     // Leaderboard: public reads for signed-in users; owner can write
     match /leaderboard/{uid} {
       allow read: if signedIn();
-      allow create, update: if isOwner(uid);
+      allow create, update: if false;
       allow delete: if false;
     }
 
     // Public activity feed
     match /activities/{activityId} {
       allow read: if signedIn();
-      allow create: if signedIn();
+      allow create: if signedIn() && request.resource.data.actorUid == request.auth.uid;
       allow update, delete: if isAdmin();
     }
 
@@ -124,7 +127,7 @@ service cloud.firestore {
       allow read: if signedIn()
         && (resource.data.senderUid == request.auth.uid
             || resource.data.recipientUid == request.auth.uid);
-      allow create: if signedIn();
+      allow create: if signedIn() && request.resource.data.senderUid == request.auth.uid;
     }
 
     // Lock down everything else
