@@ -20,7 +20,12 @@ async function initFirebase() {
     firebaseApp = appSdk.getApps().length ? appSdk.getApp() : appSdk.initializeApp(firebaseOptions);
     auth = authSdk.getAuth(firebaseApp);
     db = storeSdk.getFirestore(firebaseApp);
-    await authSdk.setPersistence(auth, authSdk.indexedDBLocalPersistence);
+    try {
+      await authSdk.setPersistence(auth, authSdk.browserLocalPersistence);
+    } catch (error) {
+      console.warn("Firebase auth persistence fallback:", error);
+      await authSdk.setPersistence(auth, authSdk.browserSessionPersistence);
+    }
     try {
       await storeSdk.enableMultiTabIndexedDbPersistence(db);
     } catch (error) {

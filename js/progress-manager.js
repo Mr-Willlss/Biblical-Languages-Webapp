@@ -1,5 +1,5 @@
 import { LangManager } from "./language-manager.js";
-import { initFirebase } from "./firebase-config.js";
+import { initFirebase } from "./firebase-config.js?v=20260701-authfix";
 
 const cache = new Map();
 const listeners = new Map();

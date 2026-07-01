@@ -1,6 +1,6 @@
 import { LangManager } from "./language-manager.js";
 import { getDemoUser, saveDemoUser, showToast } from "./app.js";
-import { initFirebase } from "./firebase-config.js";
+import { initFirebase } from "./firebase-config.js?v=20260701-authfix";
 
 async function ensureUserDocument(user, extra = {}) {
   const state = await initFirebase();
@@ -23,7 +23,7 @@ async function signInWithEmail(email, password) {
   if (state.mode === "firebase") {
     const sdk = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js");
     const credential = await sdk.signInWithEmailAndPassword(state.auth, email, password);
-    await ensureUserDocument(credential.user);
+    await syncUserDocument(credential.user);
     return credential;
   }
   const user = { ...getDemoUser(), email };
@@ -38,7 +38,7 @@ async function registerWithEmail({ displayName, email, password, language }) {
     const sdk = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js");
     const credential = await sdk.createUserWithEmailAndPassword(state.auth, email, password);
     await sdk.updateProfile(credential.user, { displayName });
-    await ensureUserDocument(credential.user, { displayName, language });
+    await syncUserDocument(credential.user, { displayName, language });
     return credential;
   }
   const user = { ...getDemoUser(), displayName, email, language };
@@ -53,11 +53,19 @@ async function signInWithGoogle() {
     const provider = new sdk.GoogleAuthProvider();
     provider.setCustomParameters({ prompt: "select_account" });
     const credential = await sdk.signInWithPopup(state.auth, provider);
-    await ensureUserDocument(credential.user);
+    await syncUserDocument(credential.user);
     return credential;
   }
   showToast("Demo mode is active until Firebase web credentials are added.", "info");
   return { user: getDemoUser() };
+}
+
+async function syncUserDocument(user, extra = {}) {
+  try {
+    await ensureUserDocument(user, extra);
+  } catch (error) {
+    console.warn("Signed in, but profile sync will retry later:", error);
+  }
 }
 
 async function signOutUser() {

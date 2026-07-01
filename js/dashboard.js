@@ -1,6 +1,6 @@
 import { LangManager } from "./language-manager.js";
 import { formatXP, icon, renderAppShell, renderIcons } from "./app.js";
-import { requireAuth } from "./auth-guard.js";
+import { requireAuth } from "./auth-guard.js?v=20260701-authfix";
 import { ProgressManager } from "./progress-manager.js";
 import { getLessons } from "./data-loader.js";
 

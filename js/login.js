@@ -1,6 +1,7 @@
 import { LangManager, LANG_CONFIGS } from "./language-manager.js";
 import { icon, renderIcons, showToast } from "./app.js";
-import { registerWithEmail, signInWithEmail, signInWithGoogle } from "./auth.js";
+import { registerWithEmail, signInWithEmail, signInWithGoogle } from "./auth.js?v=20260701-authfix";
+import { initFirebase } from "./firebase-config.js?v=20260701-authfix";
 
 let mode = "login";
 const form = document.getElementById("auth-form");
@@ -42,7 +43,7 @@ function renderForm() {
   document.getElementById("google-auth")?.addEventListener("click", async () => {
     try {
       await signInWithGoogle();
-      window.location.href = "dashboard.html";
+      window.location.replace("dashboard.html");
     } catch (error) {
       showToast(error.code === "auth/popup-closed-by-user" ? "Google sign-in was cancelled." : (error.message || "Google sign-in failed."), "error");
     }
@@ -70,10 +71,23 @@ form.addEventListener("submit", async (event) => {
     if (mode === "login") await signInWithEmail(data.email, data.password);
     else await registerWithEmail({ ...data, language: LangManager.get() });
     showToast("Welcome. Your study path is ready.", "success");
-    window.location.href = "dashboard.html";
+    window.location.replace("dashboard.html");
   } catch (error) {
     showToast(error.message || "Something went wrong signing in. Try again?", "error");
   }
 });
 
 renderForm();
+
+async function resumeExistingSession() {
+  try {
+    const state = await initFirebase();
+    if (state.mode !== "firebase") return;
+    await state.auth.authStateReady();
+    if (state.auth.currentUser) window.location.replace("dashboard.html");
+  } catch (error) {
+    console.warn("Could not restore the previous sign-in session:", error);
+  }
+}
+
+resumeExistingSession();
