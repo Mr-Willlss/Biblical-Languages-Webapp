@@ -612,11 +612,49 @@ select {
 .auth-page .btn { width:100%; }
 .auth-notice { margin-top:14px; border-left:4px solid var(--coral); background:#fff0ef; color:#8f2924; padding:11px 13px; font-size:.88rem; line-height:1.45; }
 .auth-notice[hidden] { display:none; }
+.social-profile-page { width:min(920px,100%); margin:0 auto; display:grid; gap:22px; }
+.profile-preview { display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:20px; border-bottom:1px solid var(--border); padding:12px 4px 26px; }
+.profile-avatar { display:grid; place-items:center; width:92px; height:92px; border-radius:50%; background:var(--avatar); color:#fff; font-family:Literata,Georgia,serif; font-size:2rem; font-weight:800; }
+.profile-identity h2 { margin:4px 0; font-family:Literata,Georgia,serif; font-size:2rem; }
+.profile-identity > p { margin:4px 0; color:var(--text-muted); }
+.profile-meta { display:flex; flex-wrap:wrap; gap:14px; margin-top:12px; color:var(--text-muted); font-size:.86rem; }
+.profile-meta span { display:flex; align-items:center; gap:6px; }
+.profile-meta svg { width:16px; height:16px; color:var(--teal); }
+.profile-editor { border:1px solid var(--border); background:#fff; }
+.profile-form { display:grid; gap:24px; padding:24px; }
+.save-state { color:var(--text-muted); font-size:.8rem; }
+.profile-fields { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.profile-fields .field-wide { grid-column:1/-1; }
+.profile-fields textarea { width:100%; resize:vertical; }
+.input-prefix { display:grid; grid-template-columns:auto 1fr; align-items:center; border:1px solid var(--border); background:#fff; }
+.input-prefix:focus-within { border-color:var(--teal); }
+.input-prefix span { padding-left:12px; color:var(--text-muted); }
+.input-prefix input { border:0; }
+.profile-section { display:grid; gap:10px; }
+.profile-section > label { font-size:.85rem; font-weight:800; }
+.avatar-swatches { display:flex; gap:10px; }
+.avatar-swatch { width:34px; height:34px; border:3px solid #fff; border-radius:50%; background:var(--swatch); box-shadow:0 0 0 1px var(--border); cursor:pointer; }
+.avatar-swatch.active { box-shadow:0 0 0 3px var(--ink); }
+.privacy-options { border-top:1px solid var(--border); border-bottom:1px solid var(--border); }
+.setting-row { display:flex; align-items:center; justify-content:space-between; gap:18px; padding:15px 0; }
+.setting-row + .setting-row { border-top:1px solid var(--border); }
+.setting-row strong, .setting-row small { display:block; }
+.setting-row small { margin-top:3px; color:var(--text-muted); }
+.setting-row input { width:20px; height:20px; accent-color:var(--teal); }
+.profile-save { justify-self:end; min-width:180px; }
 @media(max-width:640px) {
   html, body { overflow-x:hidden; }
   .game-home, .game-main, .mission-panel, .path-panel { width:100%; max-width:100%; min-width:0; }
   .quest-item { grid-template-columns:auto 1fr; }
   .quest-reward { grid-column:1/-1; display:flex; justify-content:space-between; align-items:center; width:100%; }
+  .profile-preview { grid-template-columns:auto 1fr; align-items:start; gap:14px; }
+  .profile-preview > .btn { grid-column:1/-1; width:100%; }
+  .profile-avatar { width:68px; height:68px; font-size:1.45rem; }
+  .profile-identity h2 { font-size:1.45rem; }
+  .profile-fields { grid-template-columns:1fr; }
+  .profile-fields .field-wide { grid-column:auto; }
+  .profile-form { padding:18px 16px; }
+  .profile-save { width:100%; }
 }
 @media(max-width:640px) {
   .path-page-head { align-items:start; flex-direction:column; }

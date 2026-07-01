@@ -62,21 +62,27 @@ const ProgressManager = {
     cache.set(id, local);
     const state = await initFirebase();
     if (state.mode !== "firebase" || uid === "demo-user") return local;
-    const sdk = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js");
-    const ref = sdk.doc(state.db, "users", uid, "progress", lang);
-    const snapshot = await sdk.getDoc(ref);
-    const merged = mergeProgress(local, snapshot.exists() ? snapshot.data() : null);
-    this.saveLocalProgress(uid, merged, lang, false);
-    if (!snapshot.exists()) await this.sync(uid, merged, lang);
-    if (!listeners.has(id)) {
-      listeners.set(id, sdk.onSnapshot(ref, (docSnap) => {
-        if (!docSnap.exists()) return;
-        const next = mergeProgress(this.getLocalProgress(uid, lang), docSnap.data());
-        this.saveLocalProgress(uid, next, lang, false);
-        window.dispatchEvent(new CustomEvent("progressSynced", { detail: { uid, lang, progress: next } }));
-      }));
+    try {
+      const sdk = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js");
+      const ref = sdk.doc(state.db, "users", uid, "progress", lang);
+      const snapshot = await sdk.getDoc(ref);
+      const merged = mergeProgress(local, snapshot.exists() ? snapshot.data() : null);
+      this.saveLocalProgress(uid, merged, lang, false);
+      if (!snapshot.exists()) await this.sync(uid, merged, lang);
+      if (!listeners.has(id)) {
+        listeners.set(id, sdk.onSnapshot(ref, (docSnap) => {
+          if (!docSnap.exists()) return;
+          const next = mergeProgress(this.getLocalProgress(uid, lang), docSnap.data());
+          this.saveLocalProgress(uid, next, lang, false);
+          window.dispatchEvent(new CustomEvent("progressSynced", { detail: { uid, lang, progress: next } }));
+        }, (error) => console.warn("Live progress sync unavailable; using local progress:", error)));
+      }
+      return merged;
+    } catch (error) {
+      console.warn("Cloud progress unavailable; using local progress:", error);
+      window.dispatchEvent(new CustomEvent("progressSyncUnavailable", { detail: { uid, lang } }));
+      return local;
     }
-    return merged;
   },
 
   getLocalProgress(uid = "demo-user", lang = LangManager.get()) {
@@ -98,21 +104,27 @@ const ProgressManager = {
   },
 
   async sync(uid, progress, lang = LangManager.get()) {
-    const state = await initFirebase();
-    if (state.mode !== "firebase" || uid === "demo-user") return;
-    const sdk = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js");
-    const batch = sdk.writeBatch(state.db);
-    batch.set(sdk.doc(state.db, "users", uid, "progress", lang), {
-      ...normalize(progress),
-      lang,
-      updatedAt: sdk.serverTimestamp()
-    }, { merge: true });
-    batch.set(sdk.doc(state.db, "users", uid), {
-      activeLanguage: lang,
-      lastActiveAt: sdk.serverTimestamp(),
-      [`xp_${lang}`]: Number(progress.xp || 0)
-    }, { merge: true });
-    await batch.commit();
+    try {
+      const state = await initFirebase();
+      if (state.mode !== "firebase" || uid === "demo-user") return false;
+      const sdk = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js");
+      const batch = sdk.writeBatch(state.db);
+      batch.set(sdk.doc(state.db, "users", uid, "progress", lang), {
+        ...normalize(progress),
+        lang,
+        updatedAt: sdk.serverTimestamp()
+      }, { merge: true });
+      batch.set(sdk.doc(state.db, "users", uid), {
+        activeLanguage: lang,
+        lastActiveAt: sdk.serverTimestamp(),
+        [`xp_${lang}`]: Number(progress.xp || 0)
+      }, { merge: true });
+      await batch.commit();
+      return true;
+    } catch (error) {
+      console.warn("Progress saved locally; cloud sync will retry later:", error);
+      return false;
+    }
   },
 
   completeLesson(uid, lessonNum, { xp = 20, stars = 2, title = "Lesson" } = {}) {

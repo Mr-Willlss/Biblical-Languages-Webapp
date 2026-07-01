@@ -1,7 +1,7 @@
 import { LangManager } from "./language-manager.js";
 import { icon, renderAppShell, renderIcons } from "./app.js";
 import { requireAuth } from "./auth-guard.js?v=20260701-authfix2";
-import { ProgressManager } from "./progress-manager.js";
+import { ProgressManager } from "./progress-manager.js?v=20260701-syncfix";
 import { getLessons } from "./data-loader.js";
 
 const signedInUser = await requireAuth();
