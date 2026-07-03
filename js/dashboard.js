@@ -3,6 +3,7 @@ import { formatXP, icon, renderAppShell, renderIcons } from "./app.js";
 import { requireAuth } from "./auth-guard.js?v=20260701-authfix2";
 import { ProgressManager } from "./progress-manager.js?v=20260701-syncfix";
 import { getLessons } from "./data-loader.js";
+import { SettingsManager } from "./settings-manager.js";
 
 const signedInUser = await requireAuth();
 const { user, root } = renderAppShell({ page: "dashboard", title: "Home", currentUser: signedInUser });
@@ -15,7 +16,7 @@ const nextLesson = lessons.find((item) => item.lesson === nextNumber) || lessons
 const completed = Object.keys(progress.completedLessons).length;
 const world = [...cfg.worlds, ...(cfg.furtherWorlds || [])].find((item) => item.lessons.includes(nextNumber)) || cfg.worlds[0];
 const pathNumbers = world.lessons.slice(0, 5);
-const dailyGoal = 40;
+const dailyGoal = SettingsManager.getSettings().dailyGoal;
 const dailyXp = progress.dailyXpDay === new Date().toISOString().slice(0, 10) ? progress.dailyXp : 0;
 const reviewDue = Math.max(4, Math.min(24, completed * 2));
 const leagueRank = Math.max(1, 14 - Math.floor(progress.xp / 120));

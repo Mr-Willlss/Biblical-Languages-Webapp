@@ -1,5 +1,5 @@
 import { LangManager } from "./language-manager.js";
-import { initFirebase } from "./firebase-config.js?v=20260701-authfix2";
+import { initFirebase, initFirestore } from "./firebase-config.js?v=20260703-retention";
 
 const cache = new Map();
 const listeners = new Map();
@@ -60,9 +60,14 @@ const ProgressManager = {
     const id = `${uid}:${lang}`;
     const local = this.getLocalProgress(uid, lang);
     cache.set(id, local);
-    const state = await initFirebase();
-    if (state.mode !== "firebase" || uid === "demo-user") return local;
+    if (uid !== "demo-user") void this.syncFromCloud(uid, lang, local);
+    return local;
+  },
+
+  async syncFromCloud(uid, lang, local = this.getLocalProgress(uid, lang)) {
     try {
+      const state = await initFirestore();
+      if (state.mode !== "firebase") return local;
       const sdk = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js");
       const ref = sdk.doc(state.db, "users", uid, "progress", lang);
       const snapshot = await sdk.getDoc(ref);
@@ -105,7 +110,7 @@ const ProgressManager = {
 
   async sync(uid, progress, lang = LangManager.get()) {
     try {
-      const state = await initFirebase();
+      const state = await initFirestore();
       if (state.mode !== "firebase" || uid === "demo-user") return false;
       const sdk = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js");
       const batch = sdk.writeBatch(state.db);

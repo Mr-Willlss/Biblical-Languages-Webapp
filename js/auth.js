@@ -1,9 +1,9 @@
 import { LangManager } from "./language-manager.js";
 import { getDemoUser, saveDemoUser, showToast } from "./app.js";
-import { initFirebase } from "./firebase-config.js?v=20260701-authfix2";
+import { initFirebase, initFirestore } from "./firebase-config.js?v=20260703-retention";
 
 async function ensureUserDocument(user, extra = {}) {
-  const state = await initFirebase();
+  const state = await initFirestore();
   if (state.mode !== "firebase") return;
   const sdk = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js");
   await sdk.setDoc(sdk.doc(state.db, "users", user.uid), {
@@ -23,7 +23,7 @@ async function signInWithEmail(email, password) {
   if (state.mode === "firebase") {
     const sdk = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js");
     const credential = await sdk.signInWithEmailAndPassword(state.auth, email, password);
-    await syncUserDocument(credential.user);
+    void syncUserDocument(credential.user);
     return credential;
   }
   const user = { ...getDemoUser(), email };
@@ -38,7 +38,7 @@ async function registerWithEmail({ displayName, email, password, language }) {
     const sdk = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js");
     const credential = await sdk.createUserWithEmailAndPassword(state.auth, email, password);
     await sdk.updateProfile(credential.user, { displayName });
-    await syncUserDocument(credential.user, { displayName, language });
+    void syncUserDocument(credential.user, { displayName, language });
     return credential;
   }
   const user = { ...getDemoUser(), displayName, email, language };
@@ -60,7 +60,7 @@ async function signInWithGoogle() {
         code: "auth/session-not-retained"
       });
     }
-    await syncUserDocument(credential.user);
+    void syncUserDocument(credential.user);
     return credential;
   }
   showToast("Demo mode is active until Firebase web credentials are added.", "info");

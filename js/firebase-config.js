@@ -5,6 +5,7 @@ let firebaseApp = null;
 let auth = null;
 let db = null;
 let initPromise = null;
+let firestorePromise = null;
 
 function hasRealConfig() {
   return Boolean(firebaseOptions?.apiKey && !firebaseOptions.apiKey.startsWith("YOUR_"));
@@ -16,7 +17,6 @@ async function initFirebase() {
     if (!hasRealConfig()) return { firebaseApp, auth, db, mode: "demo" };
     const appSdk = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js");
     const authSdk = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js");
-    const storeSdk = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js");
     firebaseApp = appSdk.getApps().length ? appSdk.getApp() : appSdk.initializeApp(firebaseOptions);
     try {
       auth = authSdk.initializeAuth(firebaseApp, {
@@ -31,6 +31,17 @@ async function initFirebase() {
       if (error?.code !== "auth/already-initialized") throw error;
       auth = authSdk.getAuth(firebaseApp);
     }
+    return { firebaseApp, auth, db, mode: "firebase" };
+  })();
+  return initPromise;
+}
+
+async function initFirestore() {
+  if (firestorePromise) return firestorePromise;
+  firestorePromise = (async () => {
+    const state = await initFirebase();
+    if (state.mode !== "firebase") return state;
+    const storeSdk = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js");
     db = storeSdk.getFirestore(firebaseApp);
     try {
       await storeSdk.enableMultiTabIndexedDbPersistence(db);
@@ -39,7 +50,7 @@ async function initFirebase() {
     }
     return { firebaseApp, auth, db, mode: "firebase" };
   })();
-  return initPromise;
+  return firestorePromise;
 }
 
 function getFirebaseState() {
@@ -52,4 +63,4 @@ function updateDemoProfile(patch) {
   return user;
 }
 
-export { db, auth, firebaseApp, getFirebaseState, hasRealConfig, initFirebase, updateDemoProfile };
+export { db, auth, firebaseApp, getFirebaseState, hasRealConfig, initFirebase, initFirestore, updateDemoProfile };

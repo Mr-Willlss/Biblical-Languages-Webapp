@@ -611,6 +611,9 @@ select {
 .path-row span small { margin-top:4px; color:var(--text-muted); }
 .path-row.locked { cursor:not-allowed; }
 .completion-stars { color:var(--mustard); font-size:2.5rem; }
+.completion-breakdown { display:flex; flex-wrap:wrap; justify-content:center; gap:10px; color:#b8c0c3; }
+.completion-breakdown span, .completion-breakdown strong { border:1px solid #414c50; padding:8px 12px; }
+.completion-breakdown strong { color:#60c5c0; }
 .quest-page { width:min(820px,100%); margin:0 auto; }
 .quest-list { display:grid; gap:10px; margin-top:20px; }
 .quest-item { display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:16px; min-height:112px; border:1px solid var(--border); border-radius:8px; background:#fff; padding:16px 18px; }
@@ -630,6 +633,7 @@ select {
 .auth-notice[hidden] { display:none; }
 .social-profile-page { width:min(920px,100%); margin:0 auto; display:grid; gap:22px; }
 .profile-preview { display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:20px; border-bottom:1px solid var(--border); padding:12px 4px 26px; }
+.profile-actions { display:flex; flex-wrap:wrap; gap:8px; justify-content:flex-end; }
 .profile-avatar { display:grid; place-items:center; width:92px; height:92px; border-radius:50%; background:var(--avatar); color:#fff; font-family:Literata,Georgia,serif; font-size:2rem; font-weight:800; }
 .profile-identity h2 { margin:4px 0; font-family:Literata,Georgia,serif; font-size:2rem; }
 .profile-identity > p { margin:4px 0; color:var(--text-muted); }
@@ -658,19 +662,61 @@ select {
 .setting-row small { margin-top:3px; color:var(--text-muted); }
 .setting-row input { width:20px; height:20px; accent-color:var(--teal); }
 .profile-save { justify-self:end; min-width:180px; }
+.settings-page { width:min(920px,100%); margin:0 auto; display:grid; gap:22px; }
+.settings-heading { border-bottom:1px solid var(--border); padding:8px 2px 22px; }
+.settings-heading h2 { margin:5px 0 7px; font-family:Literata,Georgia,serif; font-size:2rem; }
+.settings-heading p { color:var(--text-muted); }
+.settings-section { border:1px solid var(--border); background:var(--surface); padding:22px; }
+.theme-options { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+.theme-option { display:grid; gap:7px; border:2px solid var(--border); background:var(--bg-secondary); color:var(--text-primary); padding:10px; text-align:left; cursor:pointer; }
+.theme-option.active { border-color:var(--lang-primary); }
+.theme-option small { color:var(--text-muted); }
+.theme-preview { display:grid; grid-template-columns:28% 1fr; grid-template-rows:1fr 1fr; gap:3px; height:64px; border:1px solid var(--border); padding:5px; }
+.theme-preview i:first-child { grid-row:1/-1; }
+.theme-preview i { display:block; background:#dce3df; }
+.theme-light { background:#fff; }
+.theme-light i:first-child { background:#152025; }
+.theme-dark { background:#111719; }
+.theme-dark i { background:#344145; }
+.theme-dark i:first-child { background:#05090a; }
+.theme-contrast { background:#000; border-color:#fff; }
+.theme-contrast i { background:#fff; }
+.theme-contrast i:first-child { background:#ffe45c; }
+.theme-system { background:linear-gradient(90deg,#fff 50%,#111719 50%); }
+.theme-system i:first-child { background:#147a78; }
+.settings-list { display:grid; }
+.settings-list select { min-width:112px; border:1px solid var(--border); background:var(--bg-tertiary); color:var(--text-primary); padding:8px 10px; }
+.tutorial-steps { display:grid; gap:0; }
+.tutorial-step { display:grid; grid-template-columns:28px 42px 1fr; align-items:start; gap:12px; border-top:1px solid var(--border); padding:15px 0; }
+.tutorial-step > b { color:var(--text-muted); }
+.tutorial-step strong { display:block; margin-bottom:3px; }
+.tutorial-step p { color:var(--text-muted); line-height:1.5; }
+.tutorial-icon { display:grid; place-items:center; width:34px; height:34px; background:var(--teal-soft); color:var(--teal); }
+.tutorial-icon svg { width:18px; height:18px; }
+
+html[data-theme="dark"] .btn-ghost,
+html[data-theme="dark"] .exercise-option,
+html[data-theme="dark"] .path-row,
+html[data-theme="dark"] .quest-item,
+html[data-theme="dark"] .profile-editor,
+html[data-theme="dark"] .input-prefix { background:var(--surface); }
 @media(max-width:640px) {
   html, body { overflow-x:hidden; }
   .game-home, .game-main, .mission-panel, .path-panel { width:100%; max-width:100%; min-width:0; }
   .quest-item { grid-template-columns:auto 1fr; }
   .quest-reward { grid-column:1/-1; display:flex; justify-content:space-between; align-items:center; width:100%; }
   .profile-preview { grid-template-columns:auto 1fr; align-items:start; gap:14px; }
-  .profile-preview > .btn { grid-column:1/-1; width:100%; }
+  .profile-actions { grid-column:1/-1; width:100%; justify-content:stretch; }
+  .profile-actions .btn { flex:1; }
   .profile-avatar { width:68px; height:68px; font-size:1.45rem; }
   .profile-identity h2 { font-size:1.45rem; }
   .profile-fields { grid-template-columns:1fr; }
   .profile-fields .field-wide { grid-column:auto; }
   .profile-form { padding:18px 16px; }
   .profile-save { width:100%; }
+  .theme-options { grid-template-columns:1fr 1fr; }
+  .settings-section { padding:16px; }
+  .tutorial-step { grid-template-columns:24px 34px 1fr; gap:8px; }
 }
 @media(max-width:640px) {
   .path-page-head { align-items:start; flex-direction:column; }

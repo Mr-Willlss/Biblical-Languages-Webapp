@@ -5,6 +5,7 @@ import { ProgressManager } from "./progress-manager.js?v=20260701-syncfix";
 import { getLessons } from "./data-loader.js";
 import { buildLessonGuide } from "./lesson-guides.js?v=20260703-concise";
 import { getLessonExercises } from "./lesson-practice.js?v=20260703-focus";
+import { SettingsManager } from "./settings-manager.js";
 
 const url = new URL(window.location.href);
 const requestedLang = url.searchParams.get("lang");
@@ -17,16 +18,20 @@ const lessons = await getLessons();
 const lesson = lessons.find((item) => item.lesson === lessonNum) || lessons[0];
 const cfg = LangManager.getConfig();
 const exercises = buildSession({ ...lesson, exercises: getLessonExercises(lesson) });
+const originalQuestionCount = exercises.length;
 let hearts = 5;
 let current = 0;
-let correct = 0;
+let attempts = 0;
+let wrongAnswers = 0;
 let selected = null;
 let ordered = [];
 let answered = false;
 let learnStep = 0;
+const mastered = new Set();
 
 const guideSections = buildLessonGuide(lesson);
 const learnSteps = ["video", ...guideSections, "ready"];
+const appSettings = SettingsManager.getSettings();
 
 document.body.classList.add("lesson-game-active", "lesson-game");
 
@@ -41,7 +46,7 @@ function shuffle(array) {
 
 function youtubeEmbed(urlValue) {
   const match = String(urlValue || "").match(/(?:youtu\.be\/|v=|embed\/)([\w-]{6,})/);
-  return match ? `https://www.youtube-nocookie.com/embed/${match[1]}` : "";
+  return match ? `https://www.youtube-nocookie.com/embed/${match[1]}${appSettings.autoplayVideos ? "?autoplay=1&mute=1" : ""}` : "";
 }
 
 function renderLearn() {
@@ -104,7 +109,7 @@ function heartIcons() {
 }
 
 function progressBars() {
-  return exercises.map((_, index) => `<span class="${index <= current ? "done" : ""}"></span>`).join("");
+  return Array.from({ length: originalQuestionCount }, (_, index) => `<span class="${index < mastered.size ? "done" : ""}"></span>`).join("");
 }
 
 function choiceMarkup(exercise) {
@@ -138,14 +143,14 @@ function render() {
   ordered = [];
   answered = false;
   root.innerHTML = `
-    <div class="lesson-game-shell" style="--steps:${exercises.length}">
+    <div class="lesson-game-shell" style="--steps:${originalQuestionCount}">
       <header class="game-top">
         <a class="game-close" href="dashboard.html" aria-label="Exit lesson">${icon("x")}</a>
         <div class="game-progress" aria-label="Lesson progress">${progressBars()}</div>
         <div class="game-hearts" aria-label="${hearts} hearts">${heartIcons()}</div>
       </header>
       <main class="challenge-stage">
-        <span class="challenge-count">${current + 1} of ${exercises.length}</span>
+        <span class="challenge-count">${mastered.size} of ${originalQuestionCount} mastered${exercise.retryCount ? " · Retry" : ""}</span>
         <span class="challenge-language">${cfg.label}</span>
         <h1 class="challenge-prompt ${exercise.rtl ? "hebrew-text" : ""}">${safeText(exercise.prompt)}</h1>
         ${choiceMarkup(exercise)}
@@ -186,40 +191,63 @@ function render() {
     selected = true;
     check.disabled = false;
   }
-  check.addEventListener("click", () => answered ? advance() : checkAnswer());
+  check.addEventListener("click", checkAnswer);
   document.getElementById("guide-button").addEventListener("click", openGuide);
   renderIcons();
 }
 
 function checkAnswer() {
+  if (answered) return;
   const exercise = exercises[current];
   const value = exercise.type === "ordering" ? ordered : document.getElementById("typed-answer")?.value ?? selected;
   const expected = exercise.type === "matching" && exercise.answer == null ? true : exercise.answer;
   const result = isCorrect(value, expected);
+  playFeedbackSound(result);
   answered = true;
+  attempts += 1;
   if (result) {
-    correct += 1;
+    mastered.add(exercise.id);
     showXPPopup(5);
   } else {
+    wrongAnswers += 1;
     hearts = Math.max(0, hearts - 1);
+    exercises.push({ ...exercise, retryCount: (exercise.retryCount || 0) + 1 });
   }
+  document.querySelectorAll(".game-answer, .typed-answer").forEach((control) => { control.disabled = true; });
   document.querySelectorAll(".game-answer.selected").forEach((button) => button.classList.add(result ? "correct" : "incorrect"));
   const feedback = document.getElementById("feedback");
   feedback.className = `feedback ${result ? "correct" : "incorrect"}`;
   feedback.innerHTML = `<strong>${result ? "Correct. +5 XP" : `Answer: ${safeText(expectedText({ ...exercise, answer: expected }))}`}</strong>${exercise.explanation ? `<span>${safeText(exercise.explanation)}</span>` : ""}`;
   const check = document.getElementById("game-check");
-  check.disabled = false;
-  check.textContent = current === exercises.length - 1 ? "Finish" : "Continue";
+  check.disabled = true;
+  check.textContent = result ? "Next question..." : "Added to retry queue...";
+  const delay = appSettings.reducedMotion ? 250 : result ? 850 : 1650;
+  window.setTimeout(advance, delay);
+}
+
+function playFeedbackSound(correct) {
+  if (!appSettings.soundEffects) return;
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    const context = new AudioContext();
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(correct ? 660 : 220, context.currentTime);
+    if (correct) oscillator.frequency.exponentialRampToValueAtTime(880, context.currentTime + 0.1);
+    gain.gain.setValueAtTime(0.06, context.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 0.16);
+    oscillator.connect(gain).connect(context.destination);
+    oscillator.start();
+    oscillator.stop(context.currentTime + 0.16);
+    oscillator.addEventListener("ended", () => context.close());
+  } catch (error) {
+    console.debug("Feedback sound unavailable:", error);
+  }
 }
 
 function advance() {
-  if (hearts === 0) {
-    hearts = 5;
-    current = 0;
-    correct = 0;
-    render();
-    return;
-  }
   if (current < exercises.length - 1) {
     current += 1;
     render();
@@ -229,9 +257,13 @@ function advance() {
 }
 
 function finish() {
-  const score = Math.round((correct / exercises.length) * 100);
-  const stars = score >= 90 ? 3 : score >= 70 ? 2 : 1;
-  const result = ProgressManager.completeLesson(user.uid, lesson.lesson, { xp: lesson.xp, stars, title: lesson.title });
+  const score = Math.round((originalQuestionCount / Math.max(originalQuestionCount, attempts)) * 100);
+  const earnedXp = Math.max(1, Math.round(lesson.xp * (score / 100)));
+  const stars = score >= 90 ? 3 : score >= 75 ? 2 : 1;
+  const result = ProgressManager.completeLesson(user.uid, lesson.lesson, { xp: earnedXp, stars, title: lesson.title });
+  const nextLessonNumber = lesson.lesson < LangManager.getMaxLesson() ? lesson.lesson + 1 : null;
+  const nextHref = nextLessonNumber ? `lesson-player.html?lang=${cfg.lang}&lesson=${nextLessonNumber}` : "lessons.html";
+  const nextLabel = nextLessonNumber ? `Continue to lesson ${nextLessonNumber}` : "Review learning path";
   showCelebration(stars);
   root.innerHTML = `
     <div class="lesson-game-shell completion-screen">
@@ -239,8 +271,8 @@ function finish() {
         <span class="challenge-language">Lesson complete</span>
         <h1 class="challenge-prompt">${score}% mastery</h1>
         <div class="completion-stars">${"★".repeat(stars)}${"☆".repeat(3 - stars)}</div>
-        <p>${result.firstCompletion ? `+${lesson.xp} XP earned` : "Practice complete · XP already awarded"}</p>
-        <a class="btn btn-primary game-check" href="dashboard.html">${icon("home", "Back home")}</a>
+        <div class="completion-breakdown"><span>${attempts} attempts</span><span>${wrongAnswers} mistakes</span><strong>${result.firstCompletion ? `+${earnedXp} XP` : "Practice complete"}</strong></div>
+        <a class="btn btn-primary game-check" href="${nextHref}">${icon(nextLessonNumber ? "arrow-right" : "map", nextLabel)}</a>
       </main>
     </div>`;
   renderIcons();

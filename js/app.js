@@ -1,4 +1,5 @@
 import { LangManager, LANG_CONFIGS } from "./language-manager.js";
+import { SettingsManager } from "./settings-manager.js";
 
 const LEVEL_TITLES = [
   { level: 1, title: "Initiate", xpRequired: 0 },
@@ -186,6 +187,7 @@ function renderAppShell({ page, title, mountId = "page-root", currentUser = null
           ${sidebarLink("quests.html", "quests", "sparkles", "Quests")}
           ${sidebarLink("leaderboard.html", "leaderboard", "trophy", "League")}
           ${sidebarLink("profile.html", "profile", "user-round", "Profile")}
+          ${sidebarLink("settings.html", "settings", "settings", "Settings")}
         </nav>
         <div class="sb-lang-switcher">
           ${Object.values(LANG_CONFIGS).map((cfg) => `

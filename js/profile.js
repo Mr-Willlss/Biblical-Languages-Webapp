@@ -1,7 +1,7 @@
 import { LangManager, LANG_CONFIGS } from "./language-manager.js";
 import { icon, renderAppShell, renderIcons, safeText, showToast } from "./app.js";
 import { requireAuth } from "./auth-guard.js?v=20260701-authfix2";
-import { initFirebase } from "./firebase-config.js?v=20260701-authfix2";
+import { initFirestore } from "./firebase-config.js?v=20260703-retention";
 
 const AVATAR_COLORS = ["#ef5b55", "#168c88", "#d28b24", "#4969a8", "#8b5aa8", "#33453f"];
 const signedInUser = await requireAuth();
@@ -27,7 +27,7 @@ async function loadProfile() {
     ...localProfile()
   };
   try {
-    const state = await initFirebase();
+    const state = await initFirestore();
     if (state.mode !== "firebase") return fallback;
     const sdk = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js");
     const snapshot = await sdk.getDoc(sdk.doc(state.db, "users", user.uid));
@@ -57,7 +57,10 @@ function render(profile) {
             ${profile.location ? `<span>${icon("map-pin")} ${safeText(profile.location)}</span>` : ""}
           </div>
         </div>
-        <a class="btn btn-ghost" href="friends.html">${icon("users", "Find friends")}</a>
+        <div class="profile-actions">
+          <a class="btn btn-ghost" href="friends.html">${icon("users", "Find friends")}</a>
+          <a class="btn btn-ghost" href="settings.html">${icon("settings", "Settings")}</a>
+        </div>
       </section>
 
       <section class="profile-editor">
@@ -132,7 +135,7 @@ function render(profile) {
     button.disabled = true;
     document.getElementById("save-state").textContent = "Saving...";
     try {
-      const state = await initFirebase();
+      const state = await initFirestore();
       if (state.mode === "firebase") {
         const authSdk = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js");
         const storeSdk = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js");
