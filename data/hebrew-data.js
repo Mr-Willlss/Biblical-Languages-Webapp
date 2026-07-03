@@ -338,7 +338,7 @@ const HEBREW_LESSONS = [
         "example": "ח - guttural KH sound, deep in throat"
       }
     ],
-    "videoUrl": "https://www.youtube.com/watch?v=MQmIaVsQT4k",
+    "videoUrl": "https://youtu.be/YRkduosOdtM",
     "xp": 22,
     "vocabulary": [
       {
@@ -497,7 +497,7 @@ const HEBREW_LESSONS = [
         "example": "כְּתָב קָדוּם - ancient/old script"
       }
     ],
-    "videoUrl": "https://www.youtube.com/watch?v=zKrh87nOl0g",
+    "videoUrl": "https://youtu.be/-mNPmYZ0t9I",
     "xp": 22,
     "vocabulary": [
       {
@@ -656,7 +656,7 @@ const HEBREW_LESSONS = [
         "example": "פַּתַח - short A vowel"
       }
     ],
-    "videoUrl": "https://www.youtube.com/watch?v=OKPfEeHdkqk",
+    "videoUrl": "https://youtu.be/h6gzGsvEFu4",
     "xp": 24,
     "vocabulary": [
       {
@@ -815,7 +815,7 @@ const HEBREW_LESSONS = [
         "example": "זָכָר - masculine"
       }
     ],
-    "videoUrl": "https://www.youtube.com/watch?v=DbcKhPWwi_s",
+    "videoUrl": "https://youtu.be/SnjsPlnOwgA",
     "xp": 24,
     "vocabulary": [
       {
@@ -974,7 +974,7 @@ const HEBREW_LESSONS = [
         "example": "גָּדוֹל - big / great (masculine)"
       }
     ],
-    "videoUrl": "https://www.youtube.com/watch?v=FmqKiBQRR0E",
+    "videoUrl": "https://youtu.be/yLdhxp3tIsE",
     "xp": 24,
     "vocabulary": [
       {
@@ -1133,7 +1133,7 @@ const HEBREW_LESSONS = [
         "example": "שֹׁרֶשׁ - root (foundation concept)"
       }
     ],
-    "videoUrl": "https://www.youtube.com/watch?v=NwTvzXv2K44",
+    "videoUrl": "https://youtu.be/1DBV8AV2HLE",
     "xp": 24,
     "vocabulary": [
       {
@@ -1292,7 +1292,7 @@ const HEBREW_LESSONS = [
         "example": "בַּיִת - house"
       }
     ],
-    "videoUrl": "https://www.youtube.com/watch?v=RSwwKVdWfj4",
+    "videoUrl": "https://youtu.be/oYChC3PZJOI",
     "xp": 24,
     "vocabulary": [
       {
@@ -1451,7 +1451,7 @@ const HEBREW_LESSONS = [
         "example": "מֶלֶךְ - king"
       }
     ],
-    "videoUrl": "https://www.youtube.com/watch?v=7F-cDmKmQyE",
+    "videoUrl": "https://youtu.be/EZZtPiXgMoo",
     "xp": 24,
     "vocabulary": [
       {

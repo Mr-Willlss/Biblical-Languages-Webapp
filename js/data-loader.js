@@ -2,7 +2,7 @@ import { LangManager } from "./language-manager.js";
 
 async function getLessons() {
   if (LangManager.isHebrew()) {
-    const { HEBREW_LESSONS } = await import("../data/hebrew-data.js?v=20260701-lessons");
+    const { HEBREW_LESSONS } = await import("../data/hebrew-data.js?v=20260703-hebrewvideos");
     return HEBREW_LESSONS;
   }
   const { GREEK_LESSONS } = await import("../data/greek-data.js?v=20260701-lessons");

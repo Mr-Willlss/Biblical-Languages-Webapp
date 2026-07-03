@@ -2,7 +2,7 @@ import { LangManager } from "./language-manager.js";
 import { icon, renderAppShell, renderIcons } from "./app.js?v=20260703-sound";
 import { requireAuth } from "./auth-guard.js?v=20260701-authfix2";
 import { ProgressManager } from "./progress-manager.js?v=20260701-syncfix";
-import { getLessons } from "./data-loader.js";
+import { getLessons } from "./data-loader.js?v=20260703-hebrewvideos";
 
 const signedInUser = await requireAuth();
 const { user, root } = renderAppShell({ page: "lessons", title: "Path", currentUser: signedInUser });
