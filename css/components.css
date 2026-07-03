@@ -559,6 +559,10 @@ select {
 .game-check { min-width:180px; min-height:52px; }
 .guide-button { position:fixed; right:18px; bottom:18px; z-index:5; }
 .lesson-guide { max-height:min(680px,85vh); overflow:auto; }
+.guide-review-section { padding:4px 0 16px; }
+.guide-review-section + .guide-review-section { border-top:1px solid var(--border); padding-top:16px; }
+.guide-review-section h3 { margin:0 0 8px; color:var(--text-primary); }
+.guide-review-section p { margin:7px 0; color:var(--text-secondary); line-height:1.6; }
 .learn-shell { width:min(920px,100%); }
 .learn-counter { color:#9aa4a8; font-size:.8rem; font-weight:800; }
 .learn-stage { min-height:0; display:grid; align-content:center; justify-items:center; gap:18px; padding:24px 0; overflow:hidden; }
@@ -569,6 +573,18 @@ select {
 .theory-panel { width:min(760px,100%); max-height:min(52vh,470px); overflow:auto; border:1px solid #424d51; background:#151d21; padding:24px; color:#e7ebec; font-size:1.02rem; line-height:1.7; scrollbar-width:thin; }
 .learn-video { width:min(620px,100%); aspect-ratio:16/9; overflow:hidden; border:1px solid #424d51; background:#050708; }
 .learn-video iframe { width:100%; height:100%; border:0; }
+.primary-video { width:min(700px,100%); }
+.video-direction { max-width:680px; margin:0; color:#aeb7ba; font-size:.9rem; text-align:center; }
+.explain-title { max-width:760px; }
+.explain-panel { display:grid; gap:18px; width:min(780px,100%); max-height:min(58vh,500px); text-align:left; }
+.explain-copy { display:grid; gap:14px; }
+.explain-copy p { margin:0; color:#edf0f1; font-size:1.04rem; line-height:1.72; }
+.remember-box { display:grid; gap:5px; border-left:4px solid #60c5c0; background:#1d2c30; padding:14px 16px; }
+.remember-box strong { color:#60c5c0; font-size:.76rem; text-transform:uppercase; }
+.remember-box span { color:#fff; line-height:1.5; }
+.ready-list { width:min(620px,100%); display:grid; gap:9px; }
+.ready-list > div { display:flex; align-items:center; gap:10px; border-bottom:1px solid #3b4549; padding:10px 2px; color:#e8eced; }
+.ready-list svg { flex:0 0 auto; width:20px; height:20px; color:#60c5c0; }
 .learn-words { width:min(760px,100%); display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
 .learn-word { min-width:0; display:grid; border:1px solid #424d51; background:#171f23; padding:10px 12px; }
 .learn-word strong { overflow:hidden; color:#fff; font-family:"GFS Neohellenic",Georgia,serif; font-size:1.35rem; text-overflow:ellipsis; white-space:nowrap; }
@@ -696,6 +712,10 @@ select {
   .learn-objective { font-size:.96rem; line-height:1.5; }
   .theory-panel { max-height:55vh; padding:16px; font-size:.94rem; line-height:1.55; }
   .learn-video { width:min(100%,480px); }
+  .primary-video { width:100%; }
+  .video-direction { font-size:.8rem; }
+  .explain-panel { max-height:60vh; padding:16px; }
+  .explain-copy p { font-size:.95rem; line-height:1.58; }
   .learn-words { grid-template-columns:repeat(2,1fr); }
   .learn-word { padding:8px 9px; }
   .learn-word strong { font-size:1.15rem; }

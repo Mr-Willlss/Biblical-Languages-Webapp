@@ -3,6 +3,7 @@ import { icon, renderAppShell, renderIcons, safeText, showCelebration, showModal
 import { requireAuth } from "./auth-guard.js?v=20260701-authfix2";
 import { ProgressManager } from "./progress-manager.js?v=20260701-syncfix";
 import { getLessons } from "./data-loader.js";
+import { buildLessonGuide } from "./lesson-guides.js?v=20260703-teaching4";
 
 const url = new URL(window.location.href);
 const requestedLang = url.searchParams.get("lang");
@@ -23,8 +24,8 @@ let ordered = [];
 let answered = false;
 let learnStep = 0;
 
-const theorySteps = splitTheory(lesson.description || lesson.summary || "");
-const learnSteps = ["overview", ...theorySteps.map((_, index) => `theory-${index}`), "media"];
+const guideSections = buildLessonGuide(lesson);
+const learnSteps = ["video", ...guideSections, "ready"];
 
 document.body.classList.add("lesson-game-active", "lesson-game");
 
@@ -37,25 +38,6 @@ function shuffle(array) {
   return next;
 }
 
-function splitTheory(text) {
-  const paragraphs = String(text).split(/\n\s*\n/).map((part) => part.trim()).filter(Boolean);
-  const chunks = [];
-  let currentChunk = "";
-  paragraphs.forEach((paragraph) => {
-    const parts = paragraph.length <= 900 ? [paragraph] : paragraph.split("\n").filter(Boolean);
-    parts.forEach((part) => {
-      const combined = currentChunk ? `${currentChunk}\n\n${part}` : part;
-      if (combined.length <= 1000) currentChunk = combined;
-      else {
-        if (currentChunk) chunks.push(currentChunk);
-        currentChunk = part;
-      }
-    });
-  });
-  if (currentChunk) chunks.push(currentChunk);
-  return chunks.length ? chunks : ["Review the lesson focus, then continue to practice."];
-}
-
 function youtubeEmbed(urlValue) {
   const match = String(urlValue || "").match(/(?:youtu\.be\/|v=|embed\/)([\w-]{6,})/);
   return match ? `https://www.youtube-nocookie.com/embed/${match[1]}` : "";
@@ -63,15 +45,13 @@ function youtubeEmbed(urlValue) {
 
 function renderLearn() {
   const step = learnSteps[learnStep];
-  const isOverview = step === "overview";
-  const isMedia = step === "media";
-  const theoryIndex = step.startsWith("theory-") ? Number(step.split("-")[1]) : -1;
+  const isVideo = step === "video";
+  const isReady = step === "ready";
+  const section = typeof step === "object" ? step : null;
   const embed = youtubeEmbed(lesson.videoUrl);
   const progress = learnSteps.map((_, index) => `<span class="${index <= learnStep ? "done" : ""}"></span>`).join("");
-  const words = lesson.vocabulary.slice(0, 6).map((word) => `
-    <div class="learn-word ${word.lang === "hebrew" ? "hebrew-text" : ""}">
-      <strong>${safeText(word.script)}</strong><span>${safeText(word.transliteration || word.english)}</span><small>${safeText(word.english)}</small>
-    </div>`).join("");
+  const sectionBody = section?.body.map((paragraph) => `<p>${safeText(paragraph).replace(/\n/g, "<br>")}</p>`).join("") || "";
+  const lessonSkills = [lesson.grammarNote, `${lesson.vocabulary.length} key words`, `${exercises.length} practice questions`];
 
   root.innerHTML = `
     <div class="lesson-game-shell learn-shell" style="--steps:${learnSteps.length}">
@@ -81,16 +61,18 @@ function renderLearn() {
         <span class="learn-counter">${learnStep + 1}/${learnSteps.length}</span>
       </header>
       <main class="learn-stage">
-        ${isOverview ? `<span class="challenge-language">${cfg.label} · Lesson ${lesson.lesson}</span><h1>${safeText(lesson.title)}</h1><p class="learn-objective">${safeText(lesson.grammarNote || lesson.summary)}</p><div class="learn-callout"><strong>Goal</strong><span>${safeText(lesson.objectives?.[0] || lesson.summary)}</span></div>` : ""}
-        ${theoryIndex >= 0 ? `<span class="challenge-language">Learn the pattern · ${theoryIndex + 1} of ${theorySteps.length}</span><h1>${safeText(lesson.title)}</h1><div class="theory-panel ${lesson.lang === "hebrew" ? "hebrew-text" : ""}">${safeText(theorySteps[theoryIndex]).replace(/\n/g, "<br>")}</div>` : ""}
-        ${isMedia ? `<span class="challenge-language">Watch and recall</span><h1>Ready to put it together?</h1>${embed ? `<div class="learn-video"><iframe src="${embed}" title="${safeText(lesson.title)} video lesson" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>` : `<div class="learn-callout"><strong>Reading lesson</strong><span>This lesson has no video in the original course.</span></div>`}<div class="learn-words">${words}</div>` : ""}
+        ${isVideo ? `<span class="challenge-language">${cfg.label} · Lesson ${lesson.lesson} · Watch first</span><h1>${safeText(lesson.title)}</h1><p class="learn-objective">${safeText(lesson.grammarNote || lesson.summary)}</p>${embed ? `<div class="learn-video primary-video"><iframe src="${embed}" title="${safeText(lesson.title)} video lesson" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="eager"></iframe></div>` : `<div class="learn-callout"><strong>Reading lesson</strong><span>The original course has no video for this lesson, so begin with the guided explanation.</span></div>`}<p class="video-direction">Watch once for the main idea. You do not need to memorize everything; the next pages explain it slowly.</p>` : ""}
+        ${section ? `<span class="challenge-language">Guided explanation · ${learnStep} of ${guideSections.length}</span><h1 class="explain-title">${safeText(section.title)}</h1><div class="theory-panel explain-panel"><div class="explain-copy">${sectionBody}</div>${section.remember ? `<div class="remember-box"><strong>Check your understanding</strong><span>${safeText(section.remember)}</span></div>` : ""}</div>` : ""}
+        ${isReady ? `<span class="challenge-language">Lesson recap</span><h1>Now use what you learned</h1><p class="learn-objective">The questions will test recognition and understanding, not just memory.</p><div class="ready-list">${lessonSkills.map((skill) => `<div>${icon("check-circle-2")}<span>${safeText(skill)}</span></div>`).join("")}</div><div class="learn-callout"><strong>Learning tip</strong><span>If you miss a question, read its explanation before continuing. Mistakes are part of learning.</span></div>` : ""}
       </main>
       <footer class="game-footer learn-footer">
-        <button class="btn btn-ghost" id="learn-skip" type="button">Skip to practice</button>
-        <button class="btn btn-primary game-check" id="learn-next" type="button">${isMedia ? "Start practice" : "Continue"}</button>
+        <button class="btn btn-ghost" id="learn-back" type="button" ${learnStep === 0 ? "disabled" : ""}>Back</button>
+        <button class="btn btn-primary game-check" id="learn-next" type="button">${isVideo ? "Explain it to me" : isReady ? "Start practice" : "Continue"}</button>
       </footer>
     </div>`;
-  document.getElementById("learn-skip").addEventListener("click", render);
+  document.getElementById("learn-back").addEventListener("click", () => {
+    if (learnStep > 0) { learnStep -= 1; renderLearn(); }
+  });
   document.getElementById("learn-next").addEventListener("click", () => {
     if (learnStep < learnSteps.length - 1) { learnStep += 1; renderLearn(); }
     else render();
@@ -264,10 +246,12 @@ function finish() {
 }
 
 function openGuide() {
-  const summary = safeText(lesson.summary || lesson.description || "").split("\n").slice(0, 3).join("<br>");
-  const words = (lesson.examples || lesson.vocabulary || []).slice(0, 4)
-    .map((item) => `<div class="list-row"><strong>${safeText(item.script)}</strong><span>${safeText(item.english)}</span></div>`).join("");
-  showModal(lesson.title, `<div class="lesson-guide"><p>${summary}</p><div class="list section-gap">${words}</div></div>`, ["Return to game"]);
+  const content = guideSections.map((section) => `
+    <section class="guide-review-section">
+      <h3>${safeText(section.title)}</h3>
+      ${section.body.map((paragraph) => `<p>${safeText(paragraph).replace(/\n/g, "<br>")}</p>`).join("")}
+    </section>`).join("");
+  showModal(lesson.title, `<div class="lesson-guide">${content}</div>`, ["Return to game"]);
 }
 
 renderLearn();
