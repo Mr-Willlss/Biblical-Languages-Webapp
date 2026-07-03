@@ -3,7 +3,8 @@ import { icon, renderAppShell, renderIcons, safeText, showCelebration, showModal
 import { requireAuth } from "./auth-guard.js?v=20260701-authfix2";
 import { ProgressManager } from "./progress-manager.js?v=20260701-syncfix";
 import { getLessons } from "./data-loader.js";
-import { buildLessonGuide } from "./lesson-guides.js?v=20260703-teaching4";
+import { buildLessonGuide } from "./lesson-guides.js?v=20260703-concise";
+import { getLessonExercises } from "./lesson-practice.js?v=20260703-focus";
 
 const url = new URL(window.location.href);
 const requestedLang = url.searchParams.get("lang");
@@ -15,7 +16,7 @@ await ProgressManager.init(user.uid);
 const lessons = await getLessons();
 const lesson = lessons.find((item) => item.lesson === lessonNum) || lessons[0];
 const cfg = LangManager.getConfig();
-const exercises = buildSession(lesson);
+const exercises = buildSession({ ...lesson, exercises: getLessonExercises(lesson) });
 let hearts = 5;
 let current = 0;
 let correct = 0;

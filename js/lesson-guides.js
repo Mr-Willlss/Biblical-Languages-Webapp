@@ -124,7 +124,7 @@ function vocabularySection(lesson) {
   };
 }
 
-function compactSections(sections, limit = 6) {
+function compactSections(sections, limit = 3) {
   const compacted = sections.map((section) => ({ ...section, body: [...section.body] }));
   while (compacted.length > limit) {
     let mergeAt = 0;
@@ -144,7 +144,7 @@ function compactSections(sections, limit = 6) {
 
 function buildLessonGuide(lesson) {
   const coaching = lesson.lang === "greek" ? GREEK_COACHING[lesson.lesson] : null;
-  if (coaching?.sections) return [...coaching.sections, vocabularySection(lesson)];
+  if (coaching?.sections) return [...compactSections(coaching.sections), vocabularySection(lesson)];
   const opening = {
     title: "Start with the big idea",
     body: [
