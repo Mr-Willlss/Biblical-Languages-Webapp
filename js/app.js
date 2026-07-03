@@ -1,5 +1,8 @@
 import { LangManager, LANG_CONFIGS } from "./language-manager.js";
 import { SettingsManager } from "./settings-manager.js";
+import { SoundManager } from "./sound-manager.js?v=20260703-sound";
+
+SoundManager.installInteractionSounds();
 
 const LEVEL_TITLES = [
   { level: 1, title: "Initiate", xpRequired: 0 },
@@ -79,6 +82,7 @@ function showXPPopup(amount, x = window.innerWidth / 2, y = window.innerHeight /
 }
 
 function showCelebration(stars = 3) {
+  SoundManager.play("complete");
   const colors = ["#fbbf24", "#22c55e", "#7c5cfc", "#3b82f6", "#f59e0b"];
   for (let i = 0; i < 38; i += 1) {
     const piece = document.createElement("span");

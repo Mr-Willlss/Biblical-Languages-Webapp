@@ -1,5 +1,5 @@
 import { LangManager, LANG_CONFIGS } from "./language-manager.js";
-import { icon, renderAppShell, renderIcons, safeText, showToast } from "./app.js";
+import { icon, renderAppShell, renderIcons, safeText, showToast } from "./app.js?v=20260703-sound";
 import { requireAuth } from "./auth-guard.js?v=20260701-authfix2";
 import { initFirestore } from "./firebase-config.js?v=20260703-retention";
 
@@ -7,14 +7,15 @@ const AVATAR_COLORS = ["#ef5b55", "#168c88", "#d28b24", "#4969a8", "#8b5aa8", "#
 const signedInUser = await requireAuth();
 const { user, root } = renderAppShell({ page: "profile", title: "Profile", currentUser: signedInUser });
 const localKey = `blq_social_profile:${user.uid}`;
+let profileDirty = false;
 
 function localProfile() {
   try { return JSON.parse(localStorage.getItem(localKey) || "{}"); }
   catch { return {}; }
 }
 
-async function loadProfile() {
-  const fallback = {
+function fallbackProfile() {
+  return {
     displayName: user.displayName || "Language Learner",
     username: "",
     bio: "",
@@ -26,15 +27,18 @@ async function loadProfile() {
     allowFriendRequests: true,
     ...localProfile()
   };
+}
+
+async function loadCloudProfile(fallback) {
   try {
     const state = await initFirestore();
-    if (state.mode !== "firebase") return fallback;
+    if (state.mode !== "firebase") return null;
     const sdk = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js");
     const snapshot = await sdk.getDoc(sdk.doc(state.db, "users", user.uid));
-    return snapshot.exists() ? { ...fallback, ...snapshot.data() } : fallback;
+    return snapshot.exists() ? { ...fallback, ...snapshot.data() } : null;
   } catch (error) {
     console.warn("Cloud profile unavailable; using local profile:", error);
-    return fallback;
+    return null;
   }
 }
 
@@ -103,13 +107,18 @@ function render(profile) {
     document.getElementById("profile-preview-bio").textContent = document.getElementById("bio").value.trim() || document.getElementById("study-goal").value.trim();
     document.getElementById("profile-avatar").textContent = initials(name);
   };
-  ["display-name", "username", "bio", "study-goal"].forEach((id) => document.getElementById(id).addEventListener("input", updatePreview));
+  ["display-name", "username", "bio", "study-goal", "location", "public-profile", "friend-requests"].forEach((id) => document.getElementById(id).addEventListener("input", () => {
+    profileDirty = true;
+    updatePreview();
+  }));
   document.querySelectorAll("[data-avatar-color]").forEach((button) => button.addEventListener("click", () => {
+    profileDirty = true;
     avatarColor = button.dataset.avatarColor;
     document.querySelectorAll("[data-avatar-color]").forEach((item) => item.classList.toggle("active", item === button));
     document.getElementById("profile-avatar").style.setProperty("--avatar", avatarColor);
   }));
   document.querySelectorAll("[data-profile-lang]").forEach((button) => button.addEventListener("click", () => {
+    profileDirty = true;
     activeLanguage = button.dataset.profileLang;
     document.querySelectorAll("[data-profile-lang]").forEach((item) => item.classList.toggle("active", item === button));
   }));
@@ -145,6 +154,7 @@ function render(profile) {
       LangManager.set(activeLanguage, false);
       document.getElementById("save-state").textContent = "Saved across devices";
       showToast("Profile saved.", "success");
+      profileDirty = false;
     } catch (error) {
       console.warn("Cloud profile save unavailable:", error);
       document.getElementById("save-state").textContent = "Saved on this device";
@@ -156,4 +166,10 @@ function render(profile) {
   renderIcons();
 }
 
-render(await loadProfile());
+const initialProfile = fallbackProfile();
+render(initialProfile);
+void loadCloudProfile(initialProfile).then((cloudProfile) => {
+  if (!cloudProfile || profileDirty) return;
+  localStorage.setItem(localKey, JSON.stringify(cloudProfile));
+  render(cloudProfile);
+});

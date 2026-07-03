@@ -1,5 +1,5 @@
 import { LangManager } from "./language-manager.js";
-import { icon, renderAppShell, renderIcons, showToast, showXPPopup } from "./app.js";
+import { icon, renderAppShell, renderIcons, showToast, showXPPopup } from "./app.js?v=20260703-sound";
 import { getVocab } from "./data-loader.js";
 
 const { root } = renderAppShell({ page: "practice", title: "Practice" });

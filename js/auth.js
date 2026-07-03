@@ -1,5 +1,5 @@
 import { LangManager } from "./language-manager.js";
-import { getDemoUser, saveDemoUser, showToast } from "./app.js";
+import { getDemoUser, saveDemoUser, showToast } from "./app.js?v=20260703-sound";
 import { initFirebase, initFirestore } from "./firebase-config.js?v=20260703-retention";
 
 async function ensureUserDocument(user, extra = {}) {

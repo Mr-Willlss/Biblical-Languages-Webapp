@@ -1,11 +1,12 @@
 import { LangManager } from "./language-manager.js";
-import { icon, renderAppShell, renderIcons, safeText, showCelebration, showModal, showXPPopup } from "./app.js";
+import { icon, renderAppShell, renderIcons, safeText, showCelebration, showModal, showXPPopup } from "./app.js?v=20260703-sound";
 import { requireAuth } from "./auth-guard.js?v=20260701-authfix2";
 import { ProgressManager } from "./progress-manager.js?v=20260701-syncfix";
 import { getLessons } from "./data-loader.js";
 import { buildLessonGuide } from "./lesson-guides.js?v=20260703-concise";
 import { getLessonExercises } from "./lesson-practice.js?v=20260703-focus";
 import { SettingsManager } from "./settings-manager.js";
+import { SoundManager } from "./sound-manager.js?v=20260703-sound";
 
 const url = new URL(window.location.href);
 const requestedLang = url.searchParams.get("lang");
@@ -202,7 +203,7 @@ function checkAnswer() {
   const value = exercise.type === "ordering" ? ordered : document.getElementById("typed-answer")?.value ?? selected;
   const expected = exercise.type === "matching" && exercise.answer == null ? true : exercise.answer;
   const result = isCorrect(value, expected);
-  playFeedbackSound(result);
+  SoundManager.play(result ? "correct" : "wrong");
   answered = true;
   attempts += 1;
   if (result) {
@@ -223,28 +224,6 @@ function checkAnswer() {
   check.textContent = result ? "Next question..." : "Added to retry queue...";
   const delay = appSettings.reducedMotion ? 250 : result ? 850 : 1650;
   window.setTimeout(advance, delay);
-}
-
-function playFeedbackSound(correct) {
-  if (!appSettings.soundEffects) return;
-  try {
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContext) return;
-    const context = new AudioContext();
-    const oscillator = context.createOscillator();
-    const gain = context.createGain();
-    oscillator.type = "sine";
-    oscillator.frequency.setValueAtTime(correct ? 660 : 220, context.currentTime);
-    if (correct) oscillator.frequency.exponentialRampToValueAtTime(880, context.currentTime + 0.1);
-    gain.gain.setValueAtTime(0.06, context.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 0.16);
-    oscillator.connect(gain).connect(context.destination);
-    oscillator.start();
-    oscillator.stop(context.currentTime + 0.16);
-    oscillator.addEventListener("ended", () => context.close());
-  } catch (error) {
-    console.debug("Feedback sound unavailable:", error);
-  }
 }
 
 function advance() {

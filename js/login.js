@@ -1,5 +1,5 @@
 import { LangManager, LANG_CONFIGS } from "./language-manager.js";
-import { icon, renderIcons, showToast } from "./app.js";
+import { icon, renderIcons, showToast } from "./app.js?v=20260703-sound";
 import { registerWithEmail, signInWithEmail, signInWithGoogle } from "./auth.js?v=20260701-authfix2";
 import { initFirebase } from "./firebase-config.js?v=20260701-authfix2";
 

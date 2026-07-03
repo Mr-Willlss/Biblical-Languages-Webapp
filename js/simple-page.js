@@ -1,5 +1,5 @@
 import { LangManager } from "./language-manager.js";
-import { getDemoUser, icon, renderAppShell, renderIcons, saveDemoUser, showToast } from "./app.js";
+import { getDemoUser, icon, renderAppShell, renderIcons, saveDemoUser, showToast } from "./app.js?v=20260703-sound";
 import { getLessons, getQuests } from "./data-loader.js";
 
 const page = document.body.dataset.page;

@@ -1,4 +1,4 @@
-import { getDemoUser, saveDemoUser } from "./app.js";
+import { getDemoUser, saveDemoUser } from "./app.js?v=20260703-sound";
 
 const firebaseOptions = window.BLQ_FIREBASE_CONFIG || null;
 let firebaseApp = null;

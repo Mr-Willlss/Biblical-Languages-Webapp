@@ -1,4 +1,4 @@
-import { getDemoUser } from "./app.js";
+import { getDemoUser } from "./app.js?v=20260703-sound";
 import { initFirebase } from "./firebase-config.js?v=20260701-authfix2";
 
 async function requireAuth({ admin = false } = {}) {
