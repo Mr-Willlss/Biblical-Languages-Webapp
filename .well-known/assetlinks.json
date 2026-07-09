@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.biblicallanguages.browser",
+      "sha256_cert_fingerprints": [
+        "96:A1:8B:2D:92:80:31:EF:0D:23:E9:12:4C:E4:D4:CC:46:EB:CF:60:15:54:2E:DB:FF:FC:1D:AA:28:6B:93:30"
+      ]
+    }
+  }
+]
