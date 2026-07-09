@@ -1,8 +1,10 @@
 import { LangManager } from "./language-manager.js";
 import { icon, renderAppShell, renderIcons, showToast, showXPPopup } from "./app.js?v=20260703-sound";
 import { getVocab } from "./data-loader.js";
+import { requireAuth } from "./auth-guard.js?v=20260705-strict-auth";
 
-const { root } = renderAppShell({ page: "practice", title: "Practice" });
+const signedInUser = await requireAuth();
+const { root } = renderAppShell({ page: "practice", title: "Practice", currentUser: signedInUser });
 const vocab = await getVocab();
 const cfg = LangManager.getConfig();
 let cardIndex = 0;

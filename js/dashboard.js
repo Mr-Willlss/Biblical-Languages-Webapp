@@ -1,7 +1,7 @@
 import { LangManager } from "./language-manager.js";
 import { formatXP, icon, renderAppShell, renderIcons } from "./app.js?v=20260703-sound";
-import { requireAuth } from "./auth-guard.js?v=20260701-authfix2";
-import { ProgressManager } from "./progress-manager.js?v=20260701-syncfix";
+import { requireAuth } from "./auth-guard.js?v=20260705-strict-auth";
+import { ProgressManager } from "./progress-manager.js?v=20260709-strict-auth";
 import { getLessons } from "./data-loader.js?v=20260703-hebrewvideos";
 import { SettingsManager } from "./settings-manager.js";
 

@@ -1,8 +1,10 @@
 import { LangManager } from "./language-manager.js";
 import { icon, renderAppShell, renderIcons, showToast } from "./app.js?v=20260703-sound";
 import { getVocab } from "./data-loader.js";
+import { requireAuth } from "./auth-guard.js?v=20260705-strict-auth";
 
-const { user, root } = renderAppShell({ page: "vocabulary", title: "Vocabulary" });
+const signedInUser = await requireAuth();
+const { user, root } = renderAppShell({ page: "vocabulary", title: "Vocabulary", currentUser: signedInUser });
 const vocab = await getVocab();
 const cfg = LangManager.getConfig();
 const favKey = `blq_favorites:${user.uid}`;

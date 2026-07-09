@@ -1,5 +1,3 @@
-import { getDemoUser, saveDemoUser } from "./app.js?v=20260703-sound";
-
 const firebaseOptions = window.BLQ_FIREBASE_CONFIG || null;
 let firebaseApp = null;
 let auth = null;
@@ -14,7 +12,7 @@ function hasRealConfig() {
 async function initFirebase() {
   if (initPromise) return initPromise;
   initPromise = (async () => {
-    if (!hasRealConfig()) return { firebaseApp, auth, db, mode: "demo" };
+    if (!hasRealConfig()) return { firebaseApp, auth, db, mode: "unavailable" };
     const appSdk = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js");
     const authSdk = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js");
     firebaseApp = appSdk.getApps().length ? appSdk.getApp() : appSdk.initializeApp(firebaseOptions);
@@ -54,13 +52,7 @@ async function initFirestore() {
 }
 
 function getFirebaseState() {
-  return { firebaseApp, auth, db, mode: auth ? "firebase" : "demo" };
+  return { firebaseApp, auth, db, mode: auth ? "firebase" : "unavailable" };
 }
 
-function updateDemoProfile(patch) {
-  const user = { ...getDemoUser(), ...patch };
-  saveDemoUser(user);
-  return user;
-}
-
-export { db, auth, firebaseApp, getFirebaseState, hasRealConfig, initFirebase, initFirestore, updateDemoProfile };
+export { db, auth, firebaseApp, getFirebaseState, hasRealConfig, initFirebase, initFirestore };

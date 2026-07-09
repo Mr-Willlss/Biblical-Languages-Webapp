@@ -1,5 +1,4 @@
 import { LangManager } from "./language-manager.js";
-import { getDemoUser, saveDemoUser, showToast } from "./app.js?v=20260703-sound";
 import { initFirebase, initFirestore } from "./firebase-config.js?v=20260703-retention";
 
 async function ensureUserDocument(user, extra = {}) {
@@ -26,9 +25,7 @@ async function signInWithEmail(email, password) {
     void syncUserDocument(credential.user);
     return credential;
   }
-  const user = { ...getDemoUser(), email };
-  saveDemoUser(user);
-  return { user };
+  throw Object.assign(new Error("Firebase sign-in is unavailable."), { code: "auth/configuration-unavailable" });
 }
 
 async function registerWithEmail({ displayName, email, password, language }) {
@@ -41,9 +38,7 @@ async function registerWithEmail({ displayName, email, password, language }) {
     void syncUserDocument(credential.user, { displayName, language });
     return credential;
   }
-  const user = { ...getDemoUser(), displayName, email, language };
-  saveDemoUser(user);
-  return { user };
+  throw Object.assign(new Error("Firebase registration is unavailable."), { code: "auth/configuration-unavailable" });
 }
 
 async function signInWithGoogle() {
@@ -63,8 +58,7 @@ async function signInWithGoogle() {
     void syncUserDocument(credential.user);
     return credential;
   }
-  showToast("Demo mode is active until Firebase web credentials are added.", "info");
-  return { user: getDemoUser() };
+  throw Object.assign(new Error("Google sign-in is unavailable."), { code: "auth/configuration-unavailable" });
 }
 
 async function syncUserDocument(user, extra = {}) {

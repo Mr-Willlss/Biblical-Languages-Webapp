@@ -1,6 +1,6 @@
 import { LangManager, LANG_CONFIGS } from "./language-manager.js";
 import { icon, renderAppShell, renderIcons, safeText, showToast } from "./app.js?v=20260703-sound";
-import { requireAuth } from "./auth-guard.js?v=20260701-authfix2";
+import { requireAuth } from "./auth-guard.js?v=20260705-strict-auth";
 import { initFirestore } from "./firebase-config.js?v=20260703-retention";
 
 const AVATAR_COLORS = ["#ef5b55", "#168c88", "#d28b24", "#4969a8", "#8b5aa8", "#33453f"];

@@ -1,6 +1,7 @@
 import { LangManager } from "./language-manager.js";
-import { getDemoUser, icon, renderAppShell, renderIcons, saveDemoUser, showToast } from "./app.js?v=20260703-sound";
+import { icon, renderAppShell, renderIcons } from "./app.js?v=20260703-sound";
 import { getLessons, getQuests } from "./data-loader.js";
+import { requireAuth } from "./auth-guard.js?v=20260705-strict-auth";
 
 const page = document.body.dataset.page;
 const titles = {
@@ -11,7 +12,8 @@ const titles = {
   profile: "Profile",
   admin: "Admin"
 };
-const { user, root } = renderAppShell({ page, title: titles[page] || "Biblical Languages" });
+const signedInUser = await requireAuth({ admin: page === "admin" });
+const { user, root } = renderAppShell({ page, title: titles[page] || "Biblical Languages", currentUser: signedInUser });
 const cfg = LangManager.getConfig();
 
 function leaderboard() {
@@ -50,26 +52,13 @@ async function admin() {
   }
   const lessons = await getLessons();
   const quests = await getQuests();
-  root.innerHTML = `<div class="page-grid"><section class="hero-card"><h2>Admin Portal</h2><p>Manage lessons, users, quests, and platform health. Demo mode exposes the interface; Firestore rules protect production data.</p></section><section class="stat-grid"><article class="card stat-card"><strong>${lessons.length}</strong><span class="muted">Lessons</span></article><article class="card stat-card"><strong>${quests.length}</strong><span class="muted">Quests</span></article><article class="card stat-card"><strong>4</strong><span class="muted">Users</span></article><article class="card stat-card"><strong>99%</strong><span class="muted">Healthy</span></article></section><section class="two-col"><article class="card"><h3>Lesson Manager</h3><div class="list">${lessons.slice(0, 8).map((lesson) => `<div class="list-row"><span>Lesson ${lesson.lesson}: ${lesson.title}</span><button class="btn btn-ghost" type="button" aria-label="Edit lesson">${icon("pencil", "Edit")}</button></div>`).join("")}</div></article><article class="card"><h3>User Manager</h3><div class="list"><div class="list-row"><span>Student Scholar</span><button class="btn btn-ghost" type="button" aria-label="Award XP">${icon("plus", "Award XP")}</button></div><div class="list-row"><span>Miriam Cohen</span><button class="btn btn-ghost" type="button" aria-label="View progress">${icon("chart-no-axes-column", "Progress")}</button></div></div></article></section><section class="card"><h3>Quest Manager</h3><div class="list">${quests.map((quest) => `<div class="list-row"><span>${quest.category}: ${quest.title}</span><button class="btn btn-ghost" type="button" aria-label="Edit quest">${icon("pencil", "Edit")}</button></div>`).join("")}</div></section></div>`;
-}
-
-function profile() {
-  root.innerHTML = `<div class="page-grid"><section class="hero-card"><h2>Profile</h2><p>Set your display name, primary language, and study preferences.</p></section><section class="card"><div class="form-grid"><div class="field"><label for="display-name">Display name</label><input id="display-name" value="${user.displayName}" aria-label="Display name"></div><div class="tabs">${Object.values(window.LANG_CONFIGS).map((lang) => `<button class="tab-btn" data-profile-lang="${lang.lang}" type="button" aria-label="${lang.label}">${lang.logo} ${lang.shortLabel}</button>`).join("")}</div><button class="btn btn-primary" id="save-profile" type="button" aria-label="Save profile">${icon("save", "Save Profile")}</button></div></section></div>`;
-  document.querySelectorAll("[data-profile-lang]").forEach((button) => {
-    button.classList.toggle("active", button.dataset.profileLang === LangManager.get());
-    button.addEventListener("click", () => LangManager.set(button.dataset.profileLang, false));
-  });
-  document.getElementById("save-profile").addEventListener("click", () => {
-    saveDemoUser({ ...getDemoUser(), displayName: document.getElementById("display-name").value, language: LangManager.get() });
-    showToast("Profile saved.", "success");
-  });
+  root.innerHTML = `<div class="page-grid"><section class="hero-card"><h2>Admin Portal</h2><p>Manage lessons, users, quests, and platform health with administrator-only access.</p></section><section class="stat-grid"><article class="card stat-card"><strong>${lessons.length}</strong><span class="muted">Lessons</span></article><article class="card stat-card"><strong>${quests.length}</strong><span class="muted">Quests</span></article><article class="card stat-card"><strong>4</strong><span class="muted">Users</span></article><article class="card stat-card"><strong>99%</strong><span class="muted">Healthy</span></article></section><section class="two-col"><article class="card"><h3>Lesson Manager</h3><div class="list">${lessons.slice(0, 8).map((lesson) => `<div class="list-row"><span>Lesson ${lesson.lesson}: ${lesson.title}</span><button class="btn btn-ghost" type="button" aria-label="Edit lesson">${icon("pencil", "Edit")}</button></div>`).join("")}</div></article><article class="card"><h3>User Manager</h3><div class="list"><div class="list-row"><span>Student Scholar</span><button class="btn btn-ghost" type="button" aria-label="Award XP">${icon("plus", "Award XP")}</button></div><div class="list-row"><span>Miriam Cohen</span><button class="btn btn-ghost" type="button" aria-label="View progress">${icon("chart-no-axes-column", "Progress")}</button></div></div></article></section><section class="card"><h3>Quest Manager</h3><div class="list">${quests.map((quest) => `<div class="list-row"><span>${quest.category}: ${quest.title}</span><button class="btn btn-ghost" type="button" aria-label="Edit quest">${icon("pencil", "Edit")}</button></div>`).join("")}</div></section></div>`;
 }
 
 if (page === "leaderboard") leaderboard();
 if (page === "rewards") rewards();
 if (page === "friends") friends();
 if (page === "study-room") studyRoom();
-if (page === "profile") profile();
 if (page === "admin") await admin();
 LangManager.applyTheme();
 renderIcons();

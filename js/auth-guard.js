@@ -1,4 +1,3 @@
-import { getDemoUser } from "./app.js?v=20260703-sound";
 import { initFirebase } from "./firebase-config.js?v=20260701-authfix2";
 
 async function requireAuth({ admin = false } = {}) {
@@ -22,9 +21,9 @@ async function requireAuth({ admin = false } = {}) {
       });
     });
   }
-  const user = getDemoUser();
-  if (admin && user.role !== "admin") window.location.href = "dashboard.html";
-  return user;
+  sessionStorage.setItem("blq_auth_notice", "Sign-in is temporarily unavailable. Please try again shortly.");
+  window.location.replace("login.html?reason=configuration");
+  return new Promise(() => {});
 }
 
 export { requireAuth };

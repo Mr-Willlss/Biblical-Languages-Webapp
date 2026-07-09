@@ -127,13 +127,10 @@ function getLevelFromXP(xp = 0) {
   };
 }
 
-function getDemoUser() {
-  const saved = localStorage.getItem("blq_demo_user");
-  if (saved) return JSON.parse(saved);
-  const user = {
-    uid: "demo-user",
-    displayName: "Student Scholar",
-    email: "student@example.com",
+function defaultUserFields() {
+  return {
+    displayName: "Language Learner",
+    email: "",
     role: "student",
     language: LangManager.get(),
     xp_greek: 140,
@@ -143,12 +140,7 @@ function getDemoUser() {
     hearts: 5,
     createdAt: Date.now()
   };
-  localStorage.setItem("blq_demo_user", JSON.stringify(user));
-  return user;
-}
-
-function saveDemoUser(user) {
-  localStorage.setItem("blq_demo_user", JSON.stringify(user));
+  };
 }
 
 function sidebarLink(href, page, iconName, label) {
@@ -164,12 +156,14 @@ const MOBILE_NAV_ITEMS = [
 ];
 
 function renderAppShell({ page, title, mountId = "page-root", currentUser = null }) {
-  const sourceUser = currentUser || window.BLQ_CURRENT_USER || getDemoUser();
+  const sourceUser = currentUser || window.BLQ_CURRENT_USER;
+  if (!sourceUser?.uid) throw new Error("renderAppShell requires an authenticated Firebase user.");
+  const defaults = defaultUserFields();
   const user = {
-    ...getDemoUser(),
+    ...defaults,
     ...sourceUser,
-    displayName: sourceUser.displayName || getDemoUser().displayName,
-    role: sourceUser.role || getDemoUser().role
+    displayName: sourceUser.displayName || defaults.displayName,
+    role: sourceUser.role || defaults.role
   };
   const activeLang = LangManager.getConfig();
   const level = getLevelFromXP(user.xp_total);
@@ -229,12 +223,6 @@ function renderAppShell({ page, title, mountId = "page-root", currentUser = null
   return { user, root: document.getElementById(mountId) };
 }
 
-function requireDemoAuth() {
-  const user = getDemoUser();
-  if (!user) window.location.href = "login.html";
-  return user;
-}
-
 function safeText(value) {
   return String(value ?? "").replace(/[&<>"']/g, (char) => ({
     "&": "&amp;",
@@ -250,15 +238,12 @@ window.app = {
   closeModal,
   formatStreak,
   formatXP,
-  getDemoUser,
   getLevelFromXP,
   getTimeAgo,
   icon,
   renderAppShell,
   renderIcons,
-  requireDemoAuth,
   safeText,
-  saveDemoUser,
   showCelebration,
   showModal,
   showToast,
@@ -270,15 +255,12 @@ export {
   closeModal,
   formatStreak,
   formatXP,
-  getDemoUser,
   getLevelFromXP,
   getTimeAgo,
   icon,
   renderAppShell,
   renderIcons,
-  requireDemoAuth,
   safeText,
-  saveDemoUser,
   showCelebration,
   showModal,
   showToast,

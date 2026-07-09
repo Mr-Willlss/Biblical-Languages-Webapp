@@ -25,6 +25,13 @@ function localKey(uid, lang = LangManager.get()) {
   return `${prefix}:${uid}`;
 }
 
+function requireUid(uid) {
+  if (!uid || typeof uid !== "string") {
+    throw new Error("Authenticated user id is required for progress access.");
+  }
+  return uid;
+}
+
 function normalize(raw = {}) {
   return {
     ...emptyProgress(),
@@ -56,11 +63,12 @@ function mergeProgress(local, remote) {
 }
 
 const ProgressManager = {
-  async init(uid = "demo-user", lang = LangManager.get()) {
-    const id = `${uid}:${lang}`;
-    const local = this.getLocalProgress(uid, lang);
+  async init(uid, lang = LangManager.get()) {
+    const userId = requireUid(uid);
+    const id = `${userId}:${lang}`;
+    const local = this.getLocalProgress(userId, lang);
     cache.set(id, local);
-    if (uid !== "demo-user") void this.syncFromCloud(uid, lang, local);
+    void this.syncFromCloud(userId, lang, local);
     return local;
   },
 
@@ -90,36 +98,39 @@ const ProgressManager = {
     }
   },
 
-  getLocalProgress(uid = "demo-user", lang = LangManager.get()) {
-    const id = `${uid}:${lang}`;
+  getLocalProgress(uid, lang = LangManager.get()) {
+    const userId = requireUid(uid);
+    const id = `${userId}:${lang}`;
     if (cache.has(id)) return cache.get(id);
     try {
-      return normalize(JSON.parse(localStorage.getItem(localKey(uid, lang)) || "{}"));
+      return normalize(JSON.parse(localStorage.getItem(localKey(userId, lang)) || "{}"));
     } catch {
       return emptyProgress();
     }
   },
 
-  saveLocalProgress(uid = "demo-user", progress, lang = LangManager.get(), cloud = true) {
+  saveLocalProgress(uid, progress, lang = LangManager.get(), cloud = true) {
+    const userId = requireUid(uid);
     const next = normalize({ ...progress, updatedAtMs: Date.now() });
-    cache.set(`${uid}:${lang}`, next);
-    localStorage.setItem(localKey(uid, lang), JSON.stringify(next));
-    if (cloud) this.sync(uid, next, lang);
+    cache.set(`${userId}:${lang}`, next);
+    localStorage.setItem(localKey(userId, lang), JSON.stringify(next));
+    if (cloud) this.sync(userId, next, lang);
     return next;
   },
 
   async sync(uid, progress, lang = LangManager.get()) {
+    const userId = requireUid(uid);
     try {
       const state = await initFirestore();
-      if (state.mode !== "firebase" || uid === "demo-user") return false;
+      if (state.mode !== "firebase") return false;
       const sdk = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js");
       const batch = sdk.writeBatch(state.db);
-      batch.set(sdk.doc(state.db, "users", uid, "progress", lang), {
+      batch.set(sdk.doc(state.db, "users", userId, "progress", lang), {
         ...normalize(progress),
         lang,
         updatedAt: sdk.serverTimestamp()
       }, { merge: true });
-      batch.set(sdk.doc(state.db, "users", uid), {
+      batch.set(sdk.doc(state.db, "users", userId), {
         activeLanguage: lang,
         lastActiveAt: sdk.serverTimestamp(),
         [`xp_${lang}`]: Number(progress.xp || 0)

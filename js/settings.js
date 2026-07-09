@@ -1,5 +1,5 @@
 import { icon, renderAppShell, renderIcons, showToast } from "./app.js?v=20260703-sound";
-import { requireAuth } from "./auth-guard.js?v=20260701-authfix2";
+import { requireAuth } from "./auth-guard.js?v=20260705-strict-auth";
 import { SettingsManager } from "./settings-manager.js";
 
 const signedInUser = await requireAuth();
