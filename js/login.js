@@ -1,7 +1,7 @@
 import { LangManager, LANG_CONFIGS } from "./language-manager.js";
-import { icon, renderIcons, showToast } from "./app.js?v=20260703-sound";
-import { registerWithEmail, signInWithEmail, signInWithGoogle } from "./auth.js?v=20260701-authfix2";
-import { initFirebase } from "./firebase-config.js?v=20260701-authfix2";
+import { icon, renderIcons, showToast } from "./app.js?v=20260710-login-fix";
+import { registerWithEmail, signInWithEmail, signInWithGoogle } from "./auth.js?v=20260710-login-fix";
+import { initFirebase } from "./firebase-config.js?v=20260710-login-fix";
 
 let mode = "login";
 const form = document.getElementById("auth-form");
@@ -90,6 +90,7 @@ form.addEventListener("submit", async (event) => {
 });
 
 renderForm();
+window.__BLQ_LOGIN_MODULE_READY = true;
 showAuthNotice(sessionStorage.getItem("blq_auth_notice"));
 sessionStorage.removeItem("blq_auth_notice");
 

@@ -140,7 +140,6 @@ function defaultUserFields() {
     hearts: 5,
     createdAt: Date.now()
   };
-  };
 }
 
 function sidebarLink(href, page, iconName, label) {
