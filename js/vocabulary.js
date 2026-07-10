@@ -1,7 +1,8 @@
 import { LangManager } from "./language-manager.js";
 import { icon, renderAppShell, renderIcons, showToast } from "./app.js?v=20260710-mobile-admin";
 import { getVocab } from "./data-loader.js";
-import { requireAuth } from "./auth-guard.js?v=20260705-strict-auth";
+import { requireAuth } from "./auth-guard.js?v=20260710-sync-all";
+import { initFirestore } from "./firebase-config.js?v=20260703-retention";
 
 const signedInUser = await requireAuth();
 const { user, root } = renderAppShell({ page: "vocabulary", title: "Vocabulary", currentUser: signedInUser });
@@ -11,16 +12,71 @@ const favKey = `blq_favorites:${user.uid}`;
 let query = "";
 let type = "all";
 let favoritesOnly = false;
+let favoriteSet = new Set(readLocalFavorites());
+let favoriteUnsubscribe = null;
+
+function readLocalFavorites() {
+  try { return JSON.parse(localStorage.getItem(favKey) || "[]"); }
+  catch { return []; }
+}
 
 function favorites() {
-  return JSON.parse(localStorage.getItem(favKey) || "[]");
+  return [...favoriteSet];
+}
+
+function persistFavorites(nextSet) {
+  favoriteSet = new Set(nextSet);
+  localStorage.setItem(favKey, JSON.stringify([...favoriteSet]));
+}
+
+async function syncFavorites() {
+  try {
+    const state = await initFirestore();
+    if (state.mode !== "firebase") return;
+    const sdk = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js");
+    await sdk.setDoc(sdk.doc(state.db, "users", user.uid, "private", "vocabulary"), {
+      favorites: { [cfg.lang]: [...favoriteSet] },
+      updatedAt: sdk.serverTimestamp()
+    }, { merge: true });
+  } catch (error) {
+    console.warn("Vocabulary favorites cloud sync skipped:", error);
+  }
+}
+
+async function initFavoriteSync() {
+  try {
+    const state = await initFirestore();
+    if (state.mode !== "firebase") return;
+    const sdk = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js");
+    const ref = sdk.doc(state.db, "users", user.uid, "private", "vocabulary");
+    const snapshot = await sdk.getDoc(ref);
+    if (snapshot.exists()) {
+      const cloudFavorites = snapshot.data().favorites?.[cfg.lang];
+      if (Array.isArray(cloudFavorites)) {
+        persistFavorites(cloudFavorites);
+      } else if (favoriteSet.size) {
+        await syncFavorites();
+      }
+    } else {
+      await syncFavorites();
+    }
+    if (favoriteUnsubscribe) favoriteUnsubscribe();
+    favoriteUnsubscribe = sdk.onSnapshot(ref, (nextSnapshot) => {
+      if (!nextSnapshot.exists()) return;
+      persistFavorites(nextSnapshot.data().favorites?.[cfg.lang] || []);
+      renderWords();
+    }, (error) => console.warn("Live vocabulary sync unavailable:", error));
+  } catch (error) {
+    console.warn("Vocabulary favorites cloud sync unavailable:", error);
+  }
 }
 
 function toggleFavorite(id) {
   const set = new Set(favorites());
   if (set.has(id)) set.delete(id);
   else set.add(id);
-  localStorage.setItem(favKey, JSON.stringify([...set]));
+  persistFavorites(set);
+  void syncFavorites();
   showToast(set.has(id) ? "Saved to your words." : "Removed from saved words.", "success");
   renderWords();
 }
@@ -71,3 +127,4 @@ document.getElementById("my-words").addEventListener("click", () => {
 });
 LangManager.applyTheme();
 renderWords();
+void initFavoriteSync().then(renderWords);

@@ -1,6 +1,7 @@
 import { LangManager, LANG_CONFIGS } from "./language-manager.js";
-import { SettingsManager } from "./settings-manager.js";
+import { SettingsManager } from "./settings-manager.js?v=20260710-sync-all";
 import { SoundManager } from "./sound-manager.js?v=20260703-sound";
+import { initFirestore } from "./firebase-config.js?v=20260703-retention";
 
 SoundManager.installInteractionSounds();
 
@@ -133,13 +134,30 @@ function defaultUserFields() {
     email: "",
     role: "student",
     language: LangManager.get(),
-    xp_greek: 140,
-    xp_hebrew: 90,
-    xp_total: 230,
-    streak: 5,
+    xp_greek: 0,
+    xp_hebrew: 0,
+    xp_total: 0,
+    streak: 0,
     hearts: 5,
+    gems: 0,
     createdAt: Date.now()
   };
+}
+
+async function syncActiveLanguage(uid, lang) {
+  if (!uid || !LANG_CONFIGS[lang]) return;
+  try {
+    const state = await initFirestore();
+    if (state.mode !== "firebase") return;
+    const sdk = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js");
+    await sdk.setDoc(sdk.doc(state.db, "users", uid), {
+      activeLanguage: lang,
+      profile: { activeLanguage: lang },
+      lastActiveAt: sdk.serverTimestamp()
+    }, { merge: true });
+  } catch (error) {
+    console.warn("Language preference sync skipped:", error);
+  }
 }
 
 function sidebarLink(href, page, iconName, label) {
@@ -174,6 +192,7 @@ function renderAppShell({ page, title, mountId = "page-root", currentUser = null
     ? [...MOBILE_NAV_ITEMS, { href: "admin.html", page: "admin", iconName: "shield-check", label: "Admin" }]
     : MOBILE_NAV_ITEMS;
   document.body.classList.add("has-app-shell");
+  void SettingsManager.init(user.uid);
   document.body.innerHTML = `
     <div class="app-shell">
       <aside class="sidebar" id="sidebar">
@@ -223,7 +242,10 @@ function renderAppShell({ page, title, mountId = "page-root", currentUser = null
   });
   document.querySelector(".mobile-menu")?.addEventListener("click", () => document.getElementById("sidebar")?.classList.toggle("open"));
   document.querySelectorAll("[data-lang-button]").forEach((button) => {
-    button.addEventListener("click", () => LangManager.set(button.dataset.langButton));
+    button.addEventListener("click", async () => {
+      await syncActiveLanguage(user.uid, button.dataset.langButton);
+      LangManager.set(button.dataset.langButton);
+    });
   });
   LangManager.applyTheme();
   renderIcons();

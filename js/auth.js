@@ -5,12 +5,20 @@ async function ensureUserDocument(user, extra = {}) {
   const state = await initFirestore();
   if (state.mode !== "firebase") return;
   const sdk = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js");
+  const displayName = user.displayName || extra.displayName || "Language Learner";
+  const photoURL = user.photoURL || "";
+  const activeLanguage = extra.language || LangManager.get();
   await sdk.setDoc(sdk.doc(state.db, "users", user.uid), {
     uid: user.uid,
-    displayName: user.displayName || extra.displayName || "Language Learner",
+    displayName,
     email: user.email || "",
-    photoURL: user.photoURL || "",
-    activeLanguage: extra.language || LangManager.get(),
+    photoURL,
+    activeLanguage,
+    profile: {
+      displayName,
+      photoURL,
+      activeLanguage
+    },
     role: "student",
     lastActiveAt: sdk.serverTimestamp(),
     createdAt: sdk.serverTimestamp()

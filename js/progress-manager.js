@@ -73,6 +73,7 @@ const ProgressManager = {
 
   async syncFromCloud(uid, lang, local = this.getLocalProgress(uid, lang)) {
     try {
+      const id = `${uid}:${lang}`;
       const state = await initFirestore();
       if (state.mode !== "firebase") return local;
       const sdk = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js");

@@ -1,13 +1,14 @@
 import { LangManager } from "./language-manager.js";
 import { formatXP, icon, renderAppShell, renderIcons } from "./app.js?v=20260710-mobile-admin";
-import { requireAuth } from "./auth-guard.js?v=20260705-strict-auth";
-import { ProgressManager } from "./progress-manager.js?v=20260709-strict-auth";
+import { requireAuth } from "./auth-guard.js?v=20260710-sync-all";
+import { ProgressManager } from "./progress-manager.js?v=20260710-sync-all";
 import { getLessons } from "./data-loader.js?v=20260703-hebrewvideos";
-import { SettingsManager } from "./settings-manager.js";
+import { SettingsManager } from "./settings-manager.js?v=20260710-sync-all";
 
 const signedInUser = await requireAuth();
 const { user, root } = renderAppShell({ page: "dashboard", title: "Home", currentUser: signedInUser });
 await ProgressManager.init(user.uid);
+await SettingsManager.init(user.uid);
 const lessons = await getLessons();
 const progress = ProgressManager.getLocalProgress(user.uid);
 const cfg = LangManager.getConfig();

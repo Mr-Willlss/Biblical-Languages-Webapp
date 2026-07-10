@@ -1,11 +1,11 @@
 import { LangManager } from "./language-manager.js";
 import { icon, renderAppShell, renderIcons, safeText, showCelebration, showModal, showXPPopup } from "./app.js?v=20260710-mobile-admin";
-import { requireAuth } from "./auth-guard.js?v=20260705-strict-auth";
-import { ProgressManager } from "./progress-manager.js?v=20260709-strict-auth";
+import { requireAuth } from "./auth-guard.js?v=20260710-sync-all";
+import { ProgressManager } from "./progress-manager.js?v=20260710-sync-all";
 import { getLessons } from "./data-loader.js?v=20260703-hebrewvideos";
 import { buildLessonGuide } from "./lesson-guides.js?v=20260703-concise";
 import { getLessonExercises } from "./lesson-practice.js?v=20260703-focus";
-import { SettingsManager } from "./settings-manager.js";
+import { SettingsManager } from "./settings-manager.js?v=20260710-sync-all";
 import { SoundManager } from "./sound-manager.js?v=20260703-sound";
 
 const url = new URL(window.location.href);
@@ -15,6 +15,7 @@ const lessonNum = Number(url.searchParams.get("lesson") || 1);
 const signedInUser = await requireAuth();
 const { user, root } = renderAppShell({ page: "lessons", title: "Lesson", currentUser: signedInUser });
 await ProgressManager.init(user.uid);
+await SettingsManager.init(user.uid);
 const lessons = await getLessons();
 const lesson = lessons.find((item) => item.lesson === lessonNum) || lessons[0];
 const cfg = LangManager.getConfig();

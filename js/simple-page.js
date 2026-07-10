@@ -1,7 +1,7 @@
 import { LangManager } from "./language-manager.js";
 import { icon, renderAppShell, renderIcons } from "./app.js?v=20260710-mobile-admin";
 import { getLessons, getQuests } from "./data-loader.js";
-import { requireAuth } from "./auth-guard.js?v=20260705-strict-auth";
+import { requireAuth } from "./auth-guard.js?v=20260710-sync-all";
 
 const page = document.body.dataset.page;
 const titles = {

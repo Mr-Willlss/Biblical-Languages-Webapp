@@ -1,10 +1,10 @@
 import { icon, renderAppShell, renderIcons, showToast } from "./app.js?v=20260710-mobile-admin";
-import { requireAuth } from "./auth-guard.js?v=20260705-strict-auth";
-import { SettingsManager } from "./settings-manager.js";
+import { requireAuth } from "./auth-guard.js?v=20260710-sync-all";
+import { SettingsManager } from "./settings-manager.js?v=20260710-sync-all";
 
 const signedInUser = await requireAuth();
-const { root } = renderAppShell({ page: "settings", title: "Settings", currentUser: signedInUser });
-let settings = SettingsManager.getSettings();
+const { user, root } = renderAppShell({ page: "settings", title: "Settings", currentUser: signedInUser });
+let settings = await SettingsManager.init(user.uid);
 
 const themes = [
   { id: "system", label: "System", description: "Follow this device" },
@@ -29,7 +29,7 @@ function render() {
   root.innerHTML = `
     <div class="settings-page">
       <section class="settings-heading">
-        <div><span class="path-label">Preferences</span><h2>Make the app yours</h2><p>These settings apply immediately on this device.</p></div>
+        <div><span class="path-label">Preferences</span><h2>Make the app yours</h2><p>These settings sync to every device you sign in on.</p></div>
       </section>
 
       <section class="settings-section">
@@ -55,18 +55,18 @@ function render() {
     </div>`;
 
   document.querySelectorAll("[data-theme-choice]").forEach((button) => button.addEventListener("click", () => {
-    settings = SettingsManager.saveSettings({ theme: button.dataset.themeChoice });
+    settings = SettingsManager.saveSettings({ theme: button.dataset.themeChoice }, user.uid);
     render();
     showToast(`${themes.find((theme) => theme.id === settings.theme)?.label} theme applied.`, "success");
   }));
   [["sound-effects", "soundEffects"], ["autoplay-videos", "autoplayVideos"], ["lesson-reminders", "lessonReminders"], ["reduced-motion", "reducedMotion"]].forEach(([id, key]) => {
     document.getElementById(id).addEventListener("change", (event) => {
-      settings = SettingsManager.saveSettings({ [key]: event.target.checked });
+      settings = SettingsManager.saveSettings({ [key]: event.target.checked }, user.uid);
       showToast("Preference saved.", "success");
     });
   });
   document.getElementById("daily-goal").addEventListener("change", (event) => {
-    settings = SettingsManager.saveSettings({ dailyGoal: Number(event.target.value) });
+    settings = SettingsManager.saveSettings({ dailyGoal: Number(event.target.value) }, user.uid);
     showToast("Daily goal updated.", "success");
   });
   renderIcons();

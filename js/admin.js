@@ -1,4 +1,4 @@
-import { requireAuth } from "./auth-guard.js?v=20260710-admin-spark";
+import { requireAuth } from "./auth-guard.js?v=20260710-sync-all";
 import { initFirestore } from "./firebase-config.js?v=20260701-authfix2";
 import {
   formatXP,

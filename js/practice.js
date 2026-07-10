@@ -1,7 +1,7 @@
 import { LangManager } from "./language-manager.js";
 import { icon, renderAppShell, renderIcons, showToast, showXPPopup } from "./app.js?v=20260710-mobile-admin";
 import { getVocab } from "./data-loader.js";
-import { requireAuth } from "./auth-guard.js?v=20260705-strict-auth";
+import { requireAuth } from "./auth-guard.js?v=20260710-sync-all";
 
 const signedInUser = await requireAuth();
 const { root } = renderAppShell({ page: "practice", title: "Practice", currentUser: signedInUser });
