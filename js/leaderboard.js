@@ -2,12 +2,10 @@ import { LangManager } from "./language-manager.js";
 import { formatXP, icon, renderAppShell, renderIcons, safeText } from "./app.js?v=20260710-mobile-admin";
 import { requireAuth } from "./auth-guard.js?v=20260710-sync-all";
 import { initFirestore } from "./firebase-config.js?v=20260701-authfix2";
-import { ProgressManager } from "./progress-manager.js?v=20260710-sync-all";
 
 const signedInUser = await requireAuth();
 const { user, root } = renderAppShell({ page: "leaderboard", title: "League", currentUser: signedInUser });
 const cfg = LangManager.getConfig();
-const currentProgress = await ProgressManager.init(user.uid, cfg.lang);
 
 function timestamp(value) {
   if (!value) return 0;
@@ -47,25 +45,6 @@ function normalizeRow(id, data = {}) {
   };
 }
 
-function currentUserFallback() {
-  const xp = Number(currentProgress.xp || 0);
-  const xpGreek = cfg.lang === "greek" ? xp : 0;
-  const xpHebrew = cfg.lang === "hebrew" ? xp : 0;
-  return normalizeRow(user.uid, {
-    uid: user.uid,
-    displayName: user.displayName,
-    photoURL: user.photoURL,
-    activeLanguage: cfg.lang,
-    xp_greek: xpGreek,
-    xp_hebrew: xpHebrew,
-    xp_total: xpGreek + xpHebrew,
-    level: Math.max(1, Math.floor((xpGreek + xpHebrew) / 50) + 1),
-    streakDays: currentProgress.streak || 0,
-    lessonsCompleted: Object.keys(currentProgress.completedLessons || {}).length,
-    updatedAt: currentProgress.updatedAtMs || Date.now()
-  });
-}
-
 function sortRows(rows) {
   return rows.sort((a, b) => b.xpTotal - a.xpTotal || b.streakDays - a.streakDays || a.displayName.localeCompare(b.displayName));
 }
@@ -86,7 +65,7 @@ function renderRows(rows) {
         <div class="leaderboard-rank-card">
           <span>Your rank</span>
           <strong>${currentRank ? `#${currentRank}` : "New"}</strong>
-          <small>${formatXP(currentIndex >= 0 ? sorted[currentIndex].xpTotal : currentProgress.xp)}</small>
+          <small>${currentIndex >= 0 ? formatXP(sorted[currentIndex].xpTotal) : "Complete a synced lesson"}</small>
         </div>
       </section>
 
@@ -101,7 +80,7 @@ function renderRows(rows) {
         </article>
         <article class="card">
           <span class="rail-title">Your streak</span>
-          <div class="rail-stat">${icon("flame")}<div><strong>${currentIndex >= 0 ? sorted[currentIndex].streakDays : currentProgress.streak || 0}</strong><small>days</small></div></div>
+          <div class="rail-stat">${icon("flame")}<div><strong>${currentIndex >= 0 ? sorted[currentIndex].streakDays : 0}</strong><small>database days</small></div></div>
         </article>
       </section>
 
@@ -140,16 +119,14 @@ async function loadLeaderboard() {
     const queryRef = sdk.query(sdk.collection(state.db, "leaderboard"), sdk.orderBy("xp_total", "desc"), sdk.limit(50));
     const snapshot = await sdk.getDocs(queryRef);
     const rows = snapshot.docs.map((docSnap) => normalizeRow(docSnap.id, docSnap.data()));
-    if (!rows.some((row) => row.uid === user.uid)) rows.push(currentUserFallback());
     renderRows(rows);
     sdk.onSnapshot(queryRef, (nextSnapshot) => {
       const liveRows = nextSnapshot.docs.map((docSnap) => normalizeRow(docSnap.id, docSnap.data()));
-      if (!liveRows.some((row) => row.uid === user.uid)) liveRows.push(currentUserFallback());
       renderRows(liveRows);
     }, (error) => console.warn("Live leaderboard updates unavailable:", error));
   } catch (error) {
     console.error("Leaderboard load failed:", error);
-    renderRows([currentUserFallback()]);
+    root.innerHTML = `<section class="empty-state">Leaderboard data could not load from Firebase. Try again shortly.</section>`;
   }
 }
 

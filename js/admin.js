@@ -77,6 +77,8 @@ function normalizeUser(id, data = {}) {
       xp_greek: xpGreek,
       xp_hebrew: xpHebrew,
       level: asNumber(stats.level, Math.max(1, Math.floor(totalXp / 50) + 1)),
+      lessons_greek: asNumber(stats.lessons_greek ?? data.lessons_greek),
+      lessons_hebrew: asNumber(stats.lessons_hebrew ?? data.lessons_hebrew),
       totalLessonsCompleted: asNumber(stats.totalLessonsCompleted),
       accuracy: asNumber(stats.accuracy ?? data.accuracy)
     },
@@ -89,14 +91,16 @@ function normalizeUser(id, data = {}) {
 
 function summarizeUsers(users) {
   return users.reduce((summary, user) => {
+    const hasGreekActivity = user.activeLanguage === "greek" || user.stats.xp_greek > 0 || user.stats.lessons_greek > 0;
+    const hasHebrewActivity = user.activeLanguage === "hebrew" || user.stats.xp_hebrew > 0 || user.stats.lessons_hebrew > 0;
     summary.students += user.isAdmin ? 0 : 1;
     summary.admins += user.isAdmin ? 1 : 0;
-    summary.greek.students += user.activeLanguage === "greek" ? 1 : 0;
-    summary.hebrew.students += user.activeLanguage === "hebrew" ? 1 : 0;
-    summary.greek.xp += user.stats.xp_greek;
-    summary.hebrew.xp += user.stats.xp_hebrew;
-    summary.greek.lessons += user.stats.xp_greek > 0 ? user.stats.totalLessonsCompleted : 0;
-    summary.hebrew.lessons += user.stats.xp_hebrew > 0 ? user.stats.totalLessonsCompleted : 0;
+    summary.greek.students += hasGreekActivity && !user.isAdmin ? 1 : 0;
+    summary.hebrew.students += hasHebrewActivity && !user.isAdmin ? 1 : 0;
+    summary.greek.xp += user.isAdmin ? 0 : user.stats.xp_greek;
+    summary.hebrew.xp += user.isAdmin ? 0 : user.stats.xp_hebrew;
+    summary.greek.lessons += user.isAdmin ? 0 : user.stats.lessons_greek;
+    summary.hebrew.lessons += user.isAdmin ? 0 : user.stats.lessons_hebrew;
     return summary;
   }, {
     students: 0,
@@ -110,7 +114,7 @@ function getCourseProgress(course) {
   const students = Number(course?.students || 0);
   const lessons = Number(course?.lessons || 0);
   if (!students) return 0;
-  return Math.min(100, Math.round((lessons / (students * 25)) * 100));
+  return Math.min(100, Math.round((lessons / (students * course.totalLessons)) * 100));
 }
 
 function renderMetric(label, value, iconName) {
@@ -141,7 +145,7 @@ function renderCourseCard(key, course) {
       <dl class="admin-course-stats">
         <div><dt>Total XP</dt><dd>${formatXP(course.xp)}</dd></div>
         <div><dt>Average XP</dt><dd>${formatXP(course.averageXp)}</dd></div>
-        <div><dt>Lesson momentum</dt><dd>${percent(progress)}</dd></div>
+        <div><dt>Lesson completion</dt><dd>${percent(progress)}</dd></div>
       </dl>
     </article>`;
 }
@@ -275,6 +279,7 @@ function buildDashboard(users, search = "") {
     courses: {
       greek: {
         label: "Koine Greek",
+        totalLessons: 25,
         students: totals.greek.students,
         xp: totals.greek.xp,
         lessons: totals.greek.lessons,
@@ -282,6 +287,7 @@ function buildDashboard(users, search = "") {
       },
       hebrew: {
         label: "Biblical Hebrew",
+        totalLessons: 24,
         students: totals.hebrew.students,
         xp: totals.hebrew.xp,
         lessons: totals.hebrew.lessons,
@@ -299,6 +305,22 @@ async function getFirestoreTools() {
   const sdk = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js");
   state.firebase = { ...firebaseState, sdk };
   return state.firebase;
+}
+
+async function loadAllUsers() {
+  const { db, sdk } = await getFirestoreTools();
+  const pageSize = 500;
+  let lastDoc = null;
+  const users = [];
+  while (true) {
+    const constraints = [sdk.orderBy(sdk.documentId()), sdk.limit(pageSize)];
+    if (lastDoc) constraints.splice(1, 0, sdk.startAfter(lastDoc));
+    const snapshot = await sdk.getDocs(sdk.query(sdk.collection(db, "users"), ...constraints));
+    users.push(...snapshot.docs.map((docSnap) => normalizeUser(docSnap.id, docSnap.data())));
+    if (snapshot.size < pageSize) break;
+    lastDoc = snapshot.docs[snapshot.docs.length - 1];
+  }
+  return users;
 }
 
 async function ensureBootstrapProfile() {
@@ -327,10 +349,8 @@ async function loadDashboard(search = "") {
   const root = document.getElementById("page-root");
   root.innerHTML = `<section class="loading-panel"><span class="spinner"></span><strong>Loading admin portal...</strong></section>`;
   try {
-    const { db, sdk } = await getFirestoreTools();
     await ensureBootstrapProfile();
-    const snapshot = await sdk.getDocs(sdk.query(sdk.collection(db, "users"), sdk.limit(2000)));
-    const users = snapshot.docs.map((docSnap) => normalizeUser(docSnap.id, docSnap.data()));
+    const users = await loadAllUsers();
     users.sort((a, b) => b.stats.totalXp - a.stats.totalXp || a.displayName.localeCompare(b.displayName));
     state.data = buildDashboard(users, search);
     renderDashboard();
