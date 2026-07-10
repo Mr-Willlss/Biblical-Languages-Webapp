@@ -1312,3 +1312,311 @@ html[data-theme="dark"] .input-prefix { background:var(--surface); }
     display: none;
   }
 }
+
+.admin-page {
+  display: grid;
+  gap: 18px;
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.admin-hero,
+.admin-panel,
+.admin-course,
+.admin-metric,
+.admin-denied-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-soft);
+}
+
+.admin-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: center;
+  padding: 22px;
+}
+
+.admin-hero h2,
+.admin-panel h2,
+.admin-denied-card h2 {
+  margin: 4px 0 8px;
+  font-size: clamp(1.35rem, 2.5vw, 2rem);
+}
+
+.admin-hero p,
+.admin-panel p,
+.admin-denied-card p {
+  max-width: 760px;
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.admin-metrics,
+.admin-courses {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-metrics {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.admin-courses {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.admin-metric {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  min-width: 0;
+  padding: 16px;
+}
+
+.admin-metric-icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--lang-primary), transparent 86%);
+  color: var(--lang-primary);
+}
+
+.admin-metric span,
+.admin-course-stats dt {
+  color: var(--text-muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.admin-metric strong {
+  display: block;
+  margin-top: 2px;
+  color: var(--text-primary);
+  font-size: 1.55rem;
+}
+
+.admin-course {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+}
+
+.admin-course-head,
+.section-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+}
+
+.admin-course h3,
+.admin-course dd,
+.admin-course-stats {
+  margin: 0;
+}
+
+.admin-course-head strong {
+  color: var(--lang-primary);
+}
+
+.progress-bar {
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--bg-tertiary);
+}
+
+.progress-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--lang-primary), var(--hebrew-primary));
+}
+
+.admin-course-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.admin-course-stats div {
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-card-soft);
+}
+
+.admin-course-stats dd {
+  color: var(--text-primary);
+  font-weight: 900;
+}
+
+.admin-panel {
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+}
+
+.admin-search {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto;
+  gap: 8px;
+}
+
+.admin-search input,
+.admin-member-form input {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  padding: 0 12px;
+  font: inherit;
+}
+
+.admin-table-wrap {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-primary);
+  overflow-x: auto;
+}
+
+.admin-table {
+  width: 100%;
+  min-width: 860px;
+  border-collapse: collapse;
+}
+
+.admin-table th,
+.admin-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.admin-table th {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.admin-table td strong,
+.admin-table td span {
+  display: block;
+}
+
+.admin-table td span {
+  max-width: 240px;
+  overflow: hidden;
+  color: var(--text-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.role-pill {
+  display: inline-grid;
+  min-width: 76px;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--bg-tertiary);
+  color: var(--text-muted);
+  padding: 6px 10px;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.role-pill.admin {
+  background: color-mix(in srgb, var(--lang-primary), transparent 84%);
+  color: var(--lang-primary);
+}
+
+.admin-member-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.admin-member-form label {
+  display: grid;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.checkbox-row {
+  align-items: center;
+  grid-template-columns: auto minmax(0, 1fr);
+}
+
+.checkbox-row input {
+  width: auto;
+  min-height: 0;
+}
+
+.admin-denied {
+  display: grid;
+  min-height: min(620px, 70vh);
+  place-items: center;
+}
+
+.admin-denied-card {
+  display: grid;
+  gap: 14px;
+  width: min(620px, 100%);
+  padding: 24px;
+}
+
+.denied-icon {
+  display: grid;
+  width: 50px;
+  height: 50px;
+  place-items: center;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--error), transparent 86%);
+  color: var(--error);
+}
+
+.admin-bootstrap-box {
+  display: grid;
+  gap: 10px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-card-soft);
+  padding: 14px;
+}
+
+@media (max-width: 920px) {
+  .admin-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .admin-metrics,
+  .admin-courses,
+  .admin-member-form {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-hero,
+  .section-head,
+  .admin-search {
+    align-items: stretch;
+    grid-template-columns: 1fr;
+  }
+
+  .admin-course-stats {
+    grid-template-columns: 1fr;
+  }
+}

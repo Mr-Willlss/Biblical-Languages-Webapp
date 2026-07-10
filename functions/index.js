@@ -71,6 +71,136 @@ function requireAuth(request) {
   return request.auth.uid;
 }
 
+async function isAdminUid(uid) {
+  if (!uid) return false;
+  const authUser = await admin.auth().getUser(uid);
+  if (authUser.customClaims?.admin === true) return true;
+  const userDoc = await db.collection("users").doc(uid).get();
+  const userData = userDoc.exists ? userDoc.data() : {};
+  return userData?.isAdmin === true || userData?.role === "admin";
+}
+
+async function requireAdmin(request) {
+  const uid = requireAuth(request);
+  if (!(await isAdminUid(uid))) {
+    throw new HttpsError("permission-denied", "Admin access is required.");
+  }
+  return uid;
+}
+
+function timestampToMillis(value) {
+  if (!value) return null;
+  if (typeof value === "number") return value;
+  if (typeof value.toMillis === "function") return value.toMillis();
+  if (typeof value.toDate === "function") return value.toDate().getTime();
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function asNumber(value, fallback = 0) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : fallback;
+}
+
+function normalizeAdminUser(uid, firestoreData = {}, authUser = {}) {
+  const profile = firestoreData.profile || {};
+  const stats = firestoreData.stats || {};
+  const social = firestoreData.social || {};
+  const rewards = firestoreData.rewards || {};
+  const xpGreek = asNumber(stats.xp_greek ?? firestoreData.xp_greek);
+  const xpHebrew = asNumber(stats.xp_hebrew ?? firestoreData.xp_hebrew);
+  const totalXp = asNumber(stats.totalXp ?? firestoreData.xp_total, xpGreek + xpHebrew);
+  const activeLanguage = normalizeLanguage(firestoreData.activeLanguage || firestoreData.language || profile.activeLanguage);
+  return {
+    uid,
+    displayName: profile.displayName || firestoreData.displayName || authUser.displayName || "Language Learner",
+    username: profile.username || firestoreData.username || "",
+    email: firestoreData.email || authUser.email || "",
+    photoURL: profile.photoURL || firestoreData.photoURL || authUser.photoURL || "",
+    activeLanguage,
+    isAdmin: firestoreData.isAdmin === true || firestoreData.role === "admin" || authUser.customClaims?.admin === true,
+    role: firestoreData.role || (authUser.customClaims?.admin === true ? "admin" : "student"),
+    stats: {
+      totalXp,
+      xp_greek: xpGreek,
+      xp_hebrew: xpHebrew,
+      level: asNumber(stats.level, Math.max(1, Math.floor(totalXp / 50) + 1)),
+      totalLessonsCompleted: asNumber(stats.totalLessonsCompleted),
+      progressPercent: asNumber(stats.progressPercent),
+      streakDays: asNumber(stats.streakDays ?? firestoreData.streak),
+      accuracy: asNumber(stats.accuracy ?? firestoreData.accuracy, 0)
+    },
+    social: {
+      league: social.league || getLeagueLabel(asNumber(social.weeklyXp)),
+      rankTitle: social.rankTitle || getRankLabel(totalXp),
+      weeklyXp: asNumber(social.weeklyXp),
+      lastActiveAt: timestampToMillis(firestoreData.updatedAt || firestoreData.lastActiveAt || social.lastLessonCompletedAt)
+    },
+    rewards: {
+      gems: asNumber(rewards.gems ?? firestoreData.gems),
+      crowns: asNumber(rewards.crowns)
+    },
+    createdAt: timestampToMillis(firestoreData.createdAt)
+  };
+}
+
+function summarizeAdminUsers(users) {
+  return users.reduce((summary, user) => {
+    summary.students += user.isAdmin ? 0 : 1;
+    summary.admins += user.isAdmin ? 1 : 0;
+    summary.totalXp += user.stats.totalXp;
+    summary.greek.students += user.activeLanguage === "greek" ? 1 : 0;
+    summary.hebrew.students += user.activeLanguage === "hebrew" ? 1 : 0;
+    summary.greek.xp += user.stats.xp_greek;
+    summary.hebrew.xp += user.stats.xp_hebrew;
+    summary.greek.lessons += user.stats.totalLessonsCompleted && user.stats.xp_greek > 0 ? user.stats.totalLessonsCompleted : 0;
+    summary.hebrew.lessons += user.stats.totalLessonsCompleted && user.stats.xp_hebrew > 0 ? user.stats.totalLessonsCompleted : 0;
+    return summary;
+  }, {
+    students: 0,
+    admins: 0,
+    totalXp: 0,
+    greek: { students: 0, xp: 0, lessons: 0 },
+    hebrew: { students: 0, xp: 0, lessons: 0 }
+  });
+}
+
+function cleanAdminInput(value, fallback = "") {
+  return String(value || fallback).trim().slice(0, 80);
+}
+
+async function applyAdminStatus({ targetUser, makeAdmin, actorUid, username, displayName }) {
+  const currentClaims = targetUser.customClaims || {};
+  const nextClaims = { ...currentClaims, admin: makeAdmin === true };
+  await admin.auth().setCustomUserClaims(targetUser.uid, nextClaims);
+  const normalizedUsername = slugifyUsername(username || displayName || targetUser.displayName || targetUser.email || targetUser.uid);
+  const profilePatch = {};
+  if (displayName || targetUser.displayName) profilePatch.displayName = cleanAdminInput(displayName, targetUser.displayName);
+  if (normalizedUsername) {
+    profilePatch.username = cleanAdminInput(username || normalizedUsername);
+    profilePatch.usernameLower = normalizedUsername;
+  }
+  await db.collection("users").doc(targetUser.uid).set({
+    uid: targetUser.uid,
+    email: targetUser.email || "",
+    photoURL: targetUser.photoURL || "",
+    profile: profilePatch,
+    role: makeAdmin ? "admin" : "student",
+    isAdmin: makeAdmin === true,
+    adminUpdatedAt: FieldValue.serverTimestamp(),
+    adminUpdatedBy: actorUid,
+    updatedAt: FieldValue.serverTimestamp()
+  }, { merge: true });
+  await db.collection("admin_audit").add({
+    action: makeAdmin ? "grant_admin" : "revoke_admin",
+    actorUid,
+    targetUid: targetUser.uid,
+    targetEmail: targetUser.email || "",
+    createdAt: FieldValue.serverTimestamp()
+  });
+  return { uid: targetUser.uid, email: targetUser.email || "", isAdmin: makeAdmin === true };
+}
+
 function getRankLabel(totalXp = 0) {
   let active = RANK_TIERS[0].label;
   RANK_TIERS.forEach((t) => { if (totalXp >= t.minXp) active = t.label; });
@@ -313,6 +443,98 @@ exports.updateUserProfile = onCall(async (request) => {
     return merged;
   });
   return { user: sanitizeUserForClient(result) };
+});
+
+// Admin portal
+
+exports.getAdminDashboard = onCall(async (request) => {
+  await requireAdmin(request);
+  const pageSize = Math.min(Math.max(asNumber(request.data?.pageSize, 50), 10), 100);
+  const search = cleanAdminInput(request.data?.search).toLowerCase();
+  const snapshot = await db.collection("users").limit(2000).get();
+  const userDocs = snapshot.docs;
+  const authIdentifiers = userDocs.slice(0, 100).map((doc) => ({ uid: doc.id }));
+  const authLookup = authIdentifiers.length
+    ? await admin.auth().getUsers(authIdentifiers)
+    : { users: [] };
+  const authByUid = new Map(authLookup.users.map((user) => [user.uid, user]));
+  let users = userDocs.map((doc) => normalizeAdminUser(doc.id, doc.data(), authByUid.get(doc.id) || {}));
+  users.sort((a, b) => b.stats.totalXp - a.stats.totalXp || a.displayName.localeCompare(b.displayName));
+  const totals = summarizeAdminUsers(users);
+  if (search) {
+    users = users.filter((user) => [
+      user.displayName,
+      user.username,
+      user.email,
+      user.uid,
+      user.activeLanguage
+    ].some((value) => String(value || "").toLowerCase().includes(search)));
+  }
+  return {
+    generatedAt: Date.now(),
+    totals,
+    courses: {
+      greek: {
+        label: "Koine Greek",
+        students: totals.greek.students,
+        xp: totals.greek.xp,
+        lessons: totals.greek.lessons,
+        averageXp: totals.greek.students ? Math.round(totals.greek.xp / totals.greek.students) : 0
+      },
+      hebrew: {
+        label: "Biblical Hebrew",
+        students: totals.hebrew.students,
+        xp: totals.hebrew.xp,
+        lessons: totals.hebrew.lessons,
+        averageXp: totals.hebrew.students ? Math.round(totals.hebrew.xp / totals.hebrew.students) : 0
+      }
+    },
+    users: users.slice(0, pageSize)
+  };
+});
+
+exports.setUserAdmin = onCall(async (request) => {
+  const actorUid = await requireAdmin(request);
+  const email = cleanAdminInput(request.data?.email).toLowerCase();
+  const targetUid = cleanAdminInput(request.data?.targetUid);
+  const makeAdmin = request.data?.makeAdmin !== false;
+  if (!email && !targetUid) {
+    throw new HttpsError("invalid-argument", "Provide a user email or uid.");
+  }
+  if (targetUid && targetUid === actorUid && makeAdmin === false) {
+    throw new HttpsError("failed-precondition", "You cannot remove your own admin access.");
+  }
+  const targetUser = targetUid
+    ? await admin.auth().getUser(targetUid)
+    : await admin.auth().getUserByEmail(email);
+  const result = await applyAdminStatus({
+    targetUser,
+    makeAdmin,
+    actorUid,
+    username: cleanAdminInput(request.data?.username),
+    displayName: cleanAdminInput(request.data?.displayName)
+  });
+  return { ok: true, user: result };
+});
+
+exports.claimInitialAdmin = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const existingAdmin = await db.collection("users").where("isAdmin", "==", true).limit(1).get();
+  if (!existingAdmin.empty) {
+    throw new HttpsError("permission-denied", "Initial admin has already been claimed.");
+  }
+  const targetUser = await admin.auth().getUser(uid);
+  if (!targetUser.email) {
+    throw new HttpsError("failed-precondition", "Your account needs an email address before it can become admin.");
+  }
+  const result = await applyAdminStatus({
+    targetUser,
+    makeAdmin: true,
+    actorUid: uid,
+    username: cleanAdminInput(request.data?.username, "Sammie"),
+    displayName: cleanAdminInput(request.data?.displayName, targetUser.displayName || "Sammie")
+  });
+  return { ok: true, user: result };
 });
 
 // ── Friend system ──────────────────────────────────────────────────────────

@@ -166,6 +166,9 @@ function renderAppShell({ page, title, mountId = "page-root", currentUser = null
   };
   const activeLang = LangManager.getConfig();
   const level = getLevelFromXP(user.xp_total);
+  const adminSidebarLink = user.isAdmin || user.role === "admin"
+    ? sidebarLink("admin.html", "admin", "shield-check", "Admin")
+    : "";
   document.body.classList.add("has-app-shell");
   document.body.innerHTML = `
     <div class="app-shell">
@@ -185,6 +188,7 @@ function renderAppShell({ page, title, mountId = "page-root", currentUser = null
           ${sidebarLink("leaderboard.html", "leaderboard", "trophy", "League")}
           ${sidebarLink("profile.html", "profile", "user-round", "Profile")}
           ${sidebarLink("settings.html", "settings", "settings", "Settings")}
+          ${adminSidebarLink}
         </nav>
         <div class="sb-lang-switcher">
           ${Object.values(LANG_CONFIGS).map((cfg) => `

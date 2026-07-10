@@ -6,11 +6,12 @@ service cloud.firestore {
     function isOwner(uid) { return signedIn() && request.auth.uid == uid; }
     function isAdmin() {
       return signedIn()
-        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+        && (request.auth.token.admin == true
+          || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true);
     }
 
     match /users/{uid} {
-      allow read: if signedIn();
+      allow read: if isOwner(uid) || isAdmin();
       allow create: if isOwner(uid) && request.resource.data.get("role", "student") == "student";
       allow update: if (isOwner(uid)
           && request.resource.data.get("role", "student") == resource.data.get("role", "student")
@@ -71,6 +72,11 @@ service cloud.firestore {
     match /announcements/{announcementId} {
       allow read: if signedIn();
       allow write: if isAdmin();
+    }
+
+    // Admin audit records
+    match /admin_audit/{auditId} {
+      allow read, write: if isAdmin();
     }
 
     // Study rooms
