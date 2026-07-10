@@ -4,7 +4,7 @@ import { requireAuth } from "./auth-guard.js?v=20260710-sync-all";
 import { ProgressManager } from "./progress-manager.js?v=20260710-sync-all";
 import { getLessons } from "./data-loader.js?v=20260703-hebrewvideos";
 import { buildLessonGuide } from "./lesson-guides.js?v=20260703-concise";
-import { getLessonExercises } from "./lesson-practice.js?v=20260703-focus";
+import { getLessonExercises } from "./lesson-practice.js?v=20260710-quest-flow";
 import { SettingsManager } from "./settings-manager.js?v=20260710-sync-all";
 import { SoundManager } from "./sound-manager.js?v=20260703-sound";
 
@@ -116,8 +116,8 @@ function progressBars() {
 
 function choiceMarkup(exercise) {
   if (exercise.options?.length) {
-    return `<div class="answer-grid">${exercise.options.map((option, index) => `
-      <button class="game-answer" type="button" data-choice="${index}" aria-label="Answer ${safeText(option)}">
+    return `<div class="answer-grid">${shuffle(exercise.options).map((option) => `
+      <button class="game-answer" type="button" data-choice="${safeText(option)}" aria-label="Answer ${safeText(option)}">
         <span class="answer-script">${safeText(option)}</span>
       </button>`).join("")}</div>`;
   }
@@ -169,7 +169,7 @@ function render() {
     if (answered) return;
     document.querySelectorAll(".game-answer").forEach((item) => item.classList.remove("selected"));
     button.classList.add("selected");
-    selected = exercise.options[Number(button.dataset.choice)];
+    selected = button.dataset.choice;
     check.disabled = false;
   }));
   document.querySelectorAll("[data-value]").forEach((button) => button.addEventListener("click", () => {

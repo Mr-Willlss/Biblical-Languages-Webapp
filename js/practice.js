@@ -11,6 +11,15 @@ let cardIndex = 0;
 let flipped = false;
 let score = 0;
 
+function shuffle(items) {
+  const next = [...items];
+  for (let i = next.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [next[i], next[j]] = [next[j], next[i]];
+  }
+  return next;
+}
+
 function currentWord() {
   return vocab[cardIndex % vocab.length];
 }
@@ -28,7 +37,7 @@ function renderMode(mode = "flashcards") {
     html = `<div class="flashcard" id="flashcard" role="button" tabindex="0" aria-label="Flip flashcard"><div><div class="flashcard-front ${scriptClass}">${flipped ? word.english : word.script}</div><p class="muted">${flipped ? word.transliteration : "Click to reveal"}</p></div></div><button class="btn btn-primary" id="next-card" type="button" aria-label="Next flashcard">${icon("arrow-right", "Next")}</button>`;
   }
   if (mode === "speed") {
-    const options = [word.english, ...vocab.filter((item) => item.id !== word.id).slice(0, 3).map((item) => item.english)].sort();
+    const options = shuffle([word.english, ...shuffle(vocab.filter((item) => item.id !== word.id)).slice(0, 3).map((item) => item.english)]);
     html = `<p class="${scriptClass} script-mark">${word.script}</p><p class="muted">Choose the meaning. Score: ${score}</p><div class="list">${options.map((option) => `<button class="exercise-option" data-speed="${option}" type="button" aria-label="${option}">${option}</button>`).join("")}</div>`;
   }
   if (mode === "typer") {
