@@ -19,7 +19,6 @@ const pathNumbers = world.lessons.slice(0, 5);
 const dailyGoal = SettingsManager.getSettings().dailyGoal;
 const dailyXp = progress.dailyXpDay === new Date().toISOString().slice(0, 10) ? progress.dailyXp : 0;
 const reviewDue = Math.max(4, Math.min(24, completed * 2));
-const leagueRank = Math.max(1, 14 - Math.floor(progress.xp / 120));
 const missionTitle = nextLesson.title
   .replace(/^The /, "")
   .replace(" — ", " · ")
@@ -98,8 +97,8 @@ root.innerHTML = `
         <div class="rail-stat">${icon("book-open")}<div><strong>${reviewDue}</strong><small>items</small></div></div>
       </a>
       <a class="card" href="leaderboard.html">
-        <span class="rail-title">Silver league</span>
-        <div class="rail-stat">${icon("trophy")}<div><strong>#${leagueRank}</strong><small>Top 20 advance</small></div></div>
+        <span class="rail-title">Synced league</span>
+        <div class="rail-stat">${icon("trophy")}<div><strong>${formatXP(progress.xp)}</strong><small>Open real rankings</small></div></div>
       </a>
     </aside>
   </div>`;

@@ -68,8 +68,7 @@ const ProgressManager = {
     const id = `${userId}:${lang}`;
     const local = this.getLocalProgress(userId, lang);
     cache.set(id, local);
-    void this.syncFromCloud(userId, lang, local);
-    return local;
+    return this.syncFromCloud(userId, lang, local);
   },
 
   async syncFromCloud(uid, lang, local = this.getLocalProgress(uid, lang)) {
@@ -124,16 +123,57 @@ const ProgressManager = {
       const state = await initFirestore();
       if (state.mode !== "firebase") return false;
       const sdk = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js");
+      const userRef = sdk.doc(state.db, "users", userId);
+      const userSnapshot = await sdk.getDoc(userRef);
+      const userData = userSnapshot.exists() ? userSnapshot.data() : {};
+      const profile = userData.profile || {};
+      const otherLang = lang === "hebrew" ? "greek" : "hebrew";
+      const currentXp = Number(progress.xp || 0);
+      const otherXp = Number(userData?.stats?.[`xp_${otherLang}`] ?? userData[`xp_${otherLang}`] ?? 0);
+      const xpGreek = lang === "greek" ? currentXp : otherXp;
+      const xpHebrew = lang === "hebrew" ? currentXp : otherXp;
+      const completedCount = Object.keys(progress.completedLessons || {}).length;
+      const otherCompleted = Number(userData?.stats?.[`lessons_${otherLang}`] || 0);
+      const totalLessonsCompleted = completedCount + otherCompleted;
+      const totalXp = xpGreek + xpHebrew;
+      const level = Math.max(1, Math.floor(totalXp / 50) + 1);
+      const displayName = profile.displayName || userData.displayName || "Language Learner";
+      const photoURL = profile.photoURL || userData.photoURL || "";
       const batch = sdk.writeBatch(state.db);
       batch.set(sdk.doc(state.db, "users", userId, "progress", lang), {
         ...normalize(progress),
         lang,
         updatedAt: sdk.serverTimestamp()
       }, { merge: true });
-      batch.set(sdk.doc(state.db, "users", userId), {
+      batch.set(userRef, {
         activeLanguage: lang,
         lastActiveAt: sdk.serverTimestamp(),
-        [`xp_${lang}`]: Number(progress.xp || 0)
+        [`xp_${lang}`]: currentXp,
+        xp_total: totalXp,
+        stats: {
+          [`xp_${lang}`]: currentXp,
+          [`lessons_${lang}`]: completedCount,
+          xp_greek: xpGreek,
+          xp_hebrew: xpHebrew,
+          totalXp,
+          totalLessonsCompleted,
+          level,
+          streakDays: Number(progress.streak || 0)
+        }
+      }, { merge: true });
+      batch.set(sdk.doc(state.db, "leaderboard", userId), {
+        uid: userId,
+        displayName,
+        photoURL,
+        activeLanguage: lang,
+        xp_greek: xpGreek,
+        xp_hebrew: xpHebrew,
+        xp_total: totalXp,
+        level,
+        streakDays: Number(progress.streak || 0),
+        lessonsCompleted: totalLessonsCompleted,
+        weeklyXp: Number(progress.dailyXp || 0),
+        updatedAt: sdk.serverTimestamp()
       }, { merge: true });
       await batch.commit();
       return true;
