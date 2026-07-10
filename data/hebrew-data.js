@@ -338,7 +338,7 @@ const HEBREW_LESSONS = [
         "example": "ח - guttural KH sound, deep in throat"
       }
     ],
-    "videoUrl": "https://youtu.be/YRkduosOdtM",
+    "videoUrl": "https://youtu.be/iCyRT2r4AJ4",
     "xp": 22,
     "vocabulary": [
       {
@@ -497,7 +497,7 @@ const HEBREW_LESSONS = [
         "example": "כְּתָב קָדוּם - ancient/old script"
       }
     ],
-    "videoUrl": "https://youtu.be/-mNPmYZ0t9I",
+    "videoUrl": "https://youtu.be/p1z__8F3ZNg",
     "xp": 22,
     "vocabulary": [
       {
@@ -656,7 +656,7 @@ const HEBREW_LESSONS = [
         "example": "פַּתַח - short A vowel"
       }
     ],
-    "videoUrl": "https://youtu.be/h6gzGsvEFu4",
+    "videoUrl": "https://youtu.be/pL0kBw3d9Ac",
     "xp": 24,
     "vocabulary": [
       {
@@ -815,7 +815,7 @@ const HEBREW_LESSONS = [
         "example": "זָכָר - masculine"
       }
     ],
-    "videoUrl": "https://youtu.be/SnjsPlnOwgA",
+    "videoUrl": "https://youtu.be/STLkM1ZN9Ao",
     "xp": 24,
     "vocabulary": [
       {
@@ -974,7 +974,7 @@ const HEBREW_LESSONS = [
         "example": "גָּדוֹל - big / great (masculine)"
       }
     ],
-    "videoUrl": "https://youtu.be/yLdhxp3tIsE",
+    "videoUrl": "https://youtu.be/oD88_GkVbKQ",
     "xp": 24,
     "vocabulary": [
       {
@@ -1133,7 +1133,7 @@ const HEBREW_LESSONS = [
         "example": "שֹׁרֶשׁ - root (foundation concept)"
       }
     ],
-    "videoUrl": "https://youtu.be/1DBV8AV2HLE",
+    "videoUrl": "https://youtu.be/_2XwPyyRBUY",
     "xp": 24,
     "vocabulary": [
       {
@@ -1292,7 +1292,7 @@ const HEBREW_LESSONS = [
         "example": "בַּיִת - house"
       }
     ],
-    "videoUrl": "https://youtu.be/oYChC3PZJOI",
+    "videoUrl": "https://youtu.be/k_4tn2E9xaM",
     "xp": 24,
     "vocabulary": [
       {
@@ -1451,7 +1451,7 @@ const HEBREW_LESSONS = [
         "example": "מֶלֶךְ - king"
       }
     ],
-    "videoUrl": "https://youtu.be/EZZtPiXgMoo",
+    "videoUrl": "https://youtu.be/VV_plT4Rrrc",
     "xp": 24,
     "vocabulary": [
       {
@@ -1610,7 +1610,7 @@ const HEBREW_LESSONS = [
         "example": "שֹׁרֶשׁ - root"
       }
     ],
-    "videoUrl": "https://www.youtube.com/watch?v=x5bJnkc2v3E",
+    "videoUrl": "https://youtu.be/rub2tl3epnI",
     "xp": 24,
     "vocabulary": [
       {
@@ -1769,7 +1769,7 @@ const HEBREW_LESSONS = [
         "example": "כָּתַב - he wrote"
       }
     ],
-    "videoUrl": "https://www.youtube.com/watch?v=q8KLpPr6_jc",
+    "videoUrl": "https://youtu.be/ejK49X3wN4A",
     "xp": 24,
     "vocabulary": [
       {
@@ -1928,7 +1928,7 @@ const HEBREW_LESSONS = [
         "example": "כּוֹתֵב - writing / he writes"
       }
     ],
-    "videoUrl": "https://www.youtube.com/watch?v=NxmL7kyY9qM",
+    "videoUrl": "https://youtu.be/xtht1xucAz4",
     "xp": 26,
     "vocabulary": [
       {
@@ -2088,7 +2088,7 @@ const HEBREW_LESSONS = [
         "example": "אָמַר - he said"
       }
     ],
-    "videoUrl": "https://www.youtube.com/watch?v=lT4vC_w8r_k",
+    "videoUrl": "https://youtu.be/u0Za65Na0Vs",
     "xp": 26,
     "vocabulary": [
       {
@@ -2248,7 +2248,7 @@ const HEBREW_LESSONS = [
         "example": "זֶה - this / this one"
       }
     ],
-    "videoUrl": "https://www.youtube.com/watch?v=AgO_x2Jz5QM",
+    "videoUrl": "https://youtu.be/mXo6RxawahA",
     "xp": 28,
     "vocabulary": [
       {
@@ -2408,7 +2408,7 @@ const HEBREW_LESSONS = [
         "example": "בְּ - in / with"
       }
     ],
-    "videoUrl": "https://www.youtube.com/watch?v=Ub9kyAKPrqQ",
+    "videoUrl": "https://youtu.be/Gg2HwAlXb0w",
     "xp": 28,
     "vocabulary": [
       {
@@ -2568,7 +2568,7 @@ const HEBREW_LESSONS = [
         "example": "אֲשֶׁר - who / that / which"
       }
     ],
-    "videoUrl": "https://www.youtube.com/watch?v=vjOpI5_w1jU",
+    "videoUrl": "https://youtu.be/RQfH0a2GqoA",
     "xp": 30,
     "vocabulary": [
       {
@@ -2730,7 +2730,7 @@ const HEBREW_LESSONS = [
         "example": "כָּתַב - he wrote"
       }
     ],
-    "videoUrl": "https://www.youtube.com/watch?v=aL6Bq7d7xMo",
+    "videoUrl": "https://youtu.be/HSDHz8bFXsc",
     "xp": 32,
     "vocabulary": [
       {
@@ -2890,7 +2890,7 @@ const HEBREW_LESSONS = [
         "example": "הַ - the"
       }
     ],
-    "videoUrl": "https://www.youtube.com/watch?v=7BmYvDO2dHc",
+    "videoUrl": "https://youtu.be/irO4fe5zb3Y",
     "xp": 34,
     "vocabulary": [
       {
@@ -3052,7 +3052,7 @@ const HEBREW_LESSONS = [
         "example": "רוּחַ - spirit / wind"
       }
     ],
-    "videoUrl": "https://www.youtube.com/watch?v=PnzLwvLdL5s",
+    "videoUrl": "https://youtu.be/TjkZFwkKHDc",
     "xp": 34,
     "vocabulary": [
       {
@@ -3212,7 +3212,7 @@ const HEBREW_LESSONS = [
         "example": "לֹא - not"
       }
     ],
-    "videoUrl": "https://www.youtube.com/watch?v=A2ePk_8nBH0",
+    "videoUrl": "https://youtu.be/hafXyNGxdUE",
     "xp": 36,
     "vocabulary": [
       {
@@ -3372,7 +3372,7 @@ const HEBREW_LESSONS = [
         "example": "יָדַיִם - two hands"
       }
     ],
-    "videoUrl": "https://www.youtube.com/watch?v=Y5_tN6dLqE8",
+    "videoUrl": "https://youtu.be/GV8RgooWPJE",
     "xp": 36,
     "vocabulary": [
       {
