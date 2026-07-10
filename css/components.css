@@ -1603,10 +1603,22 @@ html[data-theme="dark"] .input-prefix { background:var(--surface); }
 }
 
 @media (max-width: 760px) {
+  .admin-page {
+    max-width: 100%;
+    gap: 12px;
+  }
+
   .admin-metrics,
   .admin-courses,
   .admin-member-form {
     grid-template-columns: 1fr;
+  }
+
+  .admin-hero,
+  .admin-panel,
+  .admin-course,
+  .admin-metric {
+    padding: 14px;
   }
 
   .admin-hero,
@@ -1618,6 +1630,20 @@ html[data-theme="dark"] .input-prefix { background:var(--surface); }
 
   .admin-course-stats {
     grid-template-columns: 1fr;
+  }
+
+  .admin-table {
+    min-width: 720px;
+  }
+
+  .admin-table th,
+  .admin-table td {
+    padding: 10px;
+  }
+
+  .admin-table-wrap {
+    max-width: calc(100vw - 24px);
+    -webkit-overflow-scrolling: touch;
   }
 }
 

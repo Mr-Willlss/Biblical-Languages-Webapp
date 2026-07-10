@@ -1,5 +1,5 @@
 import { LangManager } from "./language-manager.js";
-import { formatXP, icon, renderAppShell, renderIcons, safeText } from "./app.js?v=20260703-sound";
+import { formatXP, icon, renderAppShell, renderIcons, safeText } from "./app.js?v=20260710-mobile-admin";
 import { requireAuth } from "./auth-guard.js?v=20260710-admin-spark";
 import { initFirestore } from "./firebase-config.js?v=20260701-authfix2";
 import { ProgressManager } from "./progress-manager.js?v=20260710-sync";

@@ -7,7 +7,7 @@ import {
   renderIcons,
   safeText,
   showToast
-} from "./app.js?v=20260710-admin";
+} from "./app.js?v=20260710-mobile-admin";
 
 const BOOTSTRAP_ADMIN_EMAIL = "samiduvimo@gmail.com";
 

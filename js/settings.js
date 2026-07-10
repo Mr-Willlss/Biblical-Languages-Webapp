@@ -1,4 +1,4 @@
-import { icon, renderAppShell, renderIcons, showToast } from "./app.js?v=20260703-sound";
+import { icon, renderAppShell, renderIcons, showToast } from "./app.js?v=20260710-mobile-admin";
 import { requireAuth } from "./auth-guard.js?v=20260705-strict-auth";
 import { SettingsManager } from "./settings-manager.js";
 

@@ -1,5 +1,5 @@
 import { LangManager } from "./language-manager.js";
-import { formatXP, icon, renderAppShell, renderIcons } from "./app.js?v=20260703-sound";
+import { formatXP, icon, renderAppShell, renderIcons } from "./app.js?v=20260710-mobile-admin";
 import { requireAuth } from "./auth-guard.js?v=20260705-strict-auth";
 import { ProgressManager } from "./progress-manager.js?v=20260709-strict-auth";
 import { getLessons } from "./data-loader.js?v=20260703-hebrewvideos";

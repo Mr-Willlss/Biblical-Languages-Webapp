@@ -1,5 +1,5 @@
 import { LangManager } from "./language-manager.js";
-import { icon, renderAppShell, renderIcons } from "./app.js?v=20260703-sound";
+import { icon, renderAppShell, renderIcons } from "./app.js?v=20260710-mobile-admin";
 import { getLessons, getQuests } from "./data-loader.js";
 import { requireAuth } from "./auth-guard.js?v=20260705-strict-auth";
 

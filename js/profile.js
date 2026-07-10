@@ -1,5 +1,5 @@
 import { LangManager, LANG_CONFIGS } from "./language-manager.js";
-import { icon, renderAppShell, renderIcons, safeText, showToast } from "./app.js?v=20260703-sound";
+import { icon, renderAppShell, renderIcons, safeText, showToast } from "./app.js?v=20260710-mobile-admin";
 import { requireAuth } from "./auth-guard.js?v=20260705-strict-auth";
 import { initFirestore } from "./firebase-config.js?v=20260703-retention";
 

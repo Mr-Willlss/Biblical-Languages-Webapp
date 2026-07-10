@@ -166,9 +166,13 @@ function renderAppShell({ page, title, mountId = "page-root", currentUser = null
   };
   const activeLang = LangManager.getConfig();
   const level = getLevelFromXP(user.xp_total);
+  const isAdminUser = user.isAdmin || user.role === "admin";
   const adminSidebarLink = user.isAdmin || user.role === "admin"
     ? sidebarLink("admin.html", "admin", "shield-check", "Admin")
     : "";
+  const mobileNavItems = isAdminUser
+    ? [...MOBILE_NAV_ITEMS, { href: "admin.html", page: "admin", iconName: "shield-check", label: "Admin" }]
+    : MOBILE_NAV_ITEMS;
   document.body.classList.add("has-app-shell");
   document.body.innerHTML = `
     <div class="app-shell">
@@ -210,7 +214,7 @@ function renderAppShell({ page, title, mountId = "page-root", currentUser = null
       </header>
       <main class="main-content" id="${mountId}"></main>
       <nav class="mobile-tabbar" aria-label="Primary mobile navigation">
-        ${MOBILE_NAV_ITEMS.map((item) => `<a class="mobile-tab ${item.page === page ? "active" : ""}" href="${item.href}" aria-label="${item.label}">${icon(item.iconName, item.label)}</a>`).join("")}
+        ${mobileNavItems.map((item) => `<a class="mobile-tab ${item.page === page ? "active" : ""}" href="${item.href}" aria-label="${item.label}">${icon(item.iconName, item.label)}</a>`).join("")}
       </nav>
     </div>`;
 
