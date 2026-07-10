@@ -1,5 +1,11 @@
 import { initFirebase, initFirestore } from "./firebase-config.js?v=20260701-authfix2";
 
+const BOOTSTRAP_ADMIN_EMAILS = new Set(["samiduvimo@gmail.com"]);
+
+function isBootstrapAdminEmail(email) {
+  return BOOTSTRAP_ADMIN_EMAILS.has(String(email || "").trim().toLowerCase());
+}
+
 async function getAdminProfile(state, user) {
   const [{ getDoc, doc }, token] = await Promise.all([
     import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js"),
@@ -7,7 +13,7 @@ async function getAdminProfile(state, user) {
   ]);
   const userDoc = await getDoc(doc(state.db, "users", user.uid)).catch(() => null);
   const data = userDoc?.exists() ? userDoc.data() : {};
-  const isAdmin = token.claims?.admin === true || data?.isAdmin === true || data?.role === "admin";
+  const isAdmin = isBootstrapAdminEmail(user.email) || token.claims?.admin === true || data?.isAdmin === true || data?.role === "admin";
   return { data, isAdmin };
 }
 
@@ -26,7 +32,7 @@ async function requireAuth({ admin = false } = {}) {
         const token = admin ? null : await user.getIdTokenResult(false).catch(() => ({ claims: {} }));
         const profile = admin
           ? await getAdminProfile(state, user)
-          : { data: {}, isAdmin: token?.claims?.admin === true };
+          : { data: {}, isAdmin: isBootstrapAdminEmail(user.email) || token?.claims?.admin === true };
         if (admin && !profile.isAdmin) {
           sessionStorage.setItem("blq_auth_notice", "Admin access is required for that page.");
           window.location.replace("dashboard.html?reason=admin");
