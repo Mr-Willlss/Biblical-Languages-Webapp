@@ -1,4 +1,4 @@
-import { SettingsManager } from "./settings-manager.js?v=20260710-sync-all";
+import { SettingsManager } from "./settings-manager.js?v=20260711-scale";
 
 let context = null;
 

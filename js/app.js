@@ -1,5 +1,5 @@
 import { LangManager, LANG_CONFIGS } from "./language-manager.js";
-import { SettingsManager } from "./settings-manager.js?v=20260710-sync-all";
+import { SettingsManager } from "./settings-manager.js?v=20260711-scale";
 import { SoundManager } from "./sound-manager.js?v=20260703-sound";
 import { initFirestore } from "./firebase-config.js?v=20260703-retention";
 

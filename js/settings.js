@@ -1,6 +1,6 @@
 import { icon, renderAppShell, renderIcons, showToast } from "./app.js?v=20260710-mobile-admin";
 import { requireAuth } from "./auth-guard.js?v=20260710-sync-all";
-import { SettingsManager } from "./settings-manager.js?v=20260710-sync-all";
+import { SettingsManager } from "./settings-manager.js?v=20260711-scale";
 
 const signedInUser = await requireAuth();
 const { user, root } = renderAppShell({ page: "settings", title: "Settings", currentUser: signedInUser });

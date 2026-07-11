@@ -14,6 +14,7 @@ const DEFAULT_SETTINGS = {
 let activeUid = "";
 let cloudReady = false;
 let unsubscribeSettings = null;
+let initPromise = null;
 
 function cleanSettings(value = {}) {
   const next = { ...DEFAULT_SETTINGS, ...value };
@@ -69,32 +70,39 @@ async function pushSettings(uid, settings) {
 
 async function init(uid) {
   if (!uid) return getSettings();
+  if (activeUid === uid && cloudReady) return getSettings();
+  if (activeUid === uid && initPromise) return initPromise;
   activeUid = uid;
   cloudReady = false;
   if (unsubscribeSettings) {
     unsubscribeSettings();
     unsubscribeSettings = null;
   }
-  try {
-    const state = await initFirestore();
-    if (state.mode !== "firebase") return getSettings();
-    const sdk = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js");
-    const ref = sdk.doc(state.db, "users", uid, "private", "settings");
-    const snapshot = await sdk.getDoc(ref);
-    if (snapshot.exists()) {
-      persistLocal(snapshot.data().settings || {});
-    } else {
-      await pushSettings(uid, getSettings());
+  initPromise = (async () => {
+    try {
+      const state = await initFirestore();
+      if (state.mode !== "firebase") return getSettings();
+      const sdk = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js");
+      const ref = sdk.doc(state.db, "users", uid, "private", "settings");
+      const snapshot = await sdk.getDoc(ref);
+      if (snapshot.exists()) {
+        persistLocal(snapshot.data().settings || {});
+      } else {
+        await pushSettings(uid, getSettings());
+      }
+      unsubscribeSettings = sdk.onSnapshot(ref, (nextSnapshot) => {
+        if (!nextSnapshot.exists() || !cloudReady) return;
+        persistLocal(nextSnapshot.data().settings || {});
+      }, (error) => console.warn("Live settings sync unavailable:", error));
+      cloudReady = true;
+    } catch (error) {
+      console.warn("Settings cloud sync unavailable:", error);
+    } finally {
+      initPromise = null;
     }
-    unsubscribeSettings = sdk.onSnapshot(ref, (nextSnapshot) => {
-      if (!nextSnapshot.exists() || !cloudReady) return;
-      persistLocal(nextSnapshot.data().settings || {});
-    }, (error) => console.warn("Live settings sync unavailable:", error));
-    cloudReady = true;
-  } catch (error) {
-    console.warn("Settings cloud sync unavailable:", error);
-  }
-  return getSettings();
+    return getSettings();
+  })();
+  return initPromise;
 }
 
 function saveSettings(patch, uid = activeUid) {

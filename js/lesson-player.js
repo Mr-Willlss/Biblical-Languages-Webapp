@@ -1,11 +1,11 @@
 import { LangManager } from "./language-manager.js";
 import { icon, renderAppShell, renderIcons, safeText, showCelebration, showModal, showXPPopup } from "./app.js?v=20260710-mobile-admin";
 import { requireAuth } from "./auth-guard.js?v=20260710-sync-all";
-import { ProgressManager } from "./progress-manager.js?v=20260710-sync-all";
+import { ProgressManager } from "./progress-manager.js?v=20260711-scale";
 import { getLessons } from "./data-loader.js?v=20260703-hebrewvideos";
 import { buildLessonGuide } from "./lesson-guides.js?v=20260703-concise";
 import { getLessonExercises } from "./lesson-practice.js?v=20260710-quest-flow";
-import { SettingsManager } from "./settings-manager.js?v=20260710-sync-all";
+import { SettingsManager } from "./settings-manager.js?v=20260711-scale";
 import { SoundManager } from "./sound-manager.js?v=20260703-sound";
 
 const url = new URL(window.location.href);

@@ -1,5 +1,5 @@
 import { LangManager } from "./language-manager.js";
-import { initFirebase, initFirestore } from "./firebase-config.js?v=20260703-retention";
+import { initFirestore } from "./firebase-config.js?v=20260703-retention";
 
 const cache = new Map();
 const listeners = new Map();
@@ -201,21 +201,7 @@ const ProgressManager = {
     progress.lastStudyDay = today;
     progress.activity = [{ id: `${lessonKey}-${now}`, type: "lesson", title, xp: firstCompletion ? xp : 0, at: now }, ...progress.activity].slice(0, 20);
     this.saveLocalProgress(uid, progress, lang);
-    if (firstCompletion) this.awardLessonXP(lang, lessonKey, xp);
     return { progress, firstCompletion };
-  },
-
-  async awardLessonXP(lang, lessonKey, xp) {
-    try {
-      const state = await initFirebase();
-      if (state.mode !== "firebase") return;
-      const appSdk = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js");
-      const fnSdk = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-functions.js");
-      const callable = fnSdk.httpsCallable(fnSdk.getFunctions(appSdk.getApp()), "awardLessonXP");
-      await callable({ lang, lessonKey, xp });
-    } catch (error) {
-      console.warn("XP award will retry through progress sync:", error);
-    }
   },
 
   completeQuest(uid, questId, { xp = 30, score = 0, title = "Quest" } = {}) {

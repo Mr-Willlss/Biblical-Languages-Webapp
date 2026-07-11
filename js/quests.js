@@ -1,7 +1,7 @@
 import { LangManager } from "./language-manager.js";
 import { icon, renderAppShell, renderIcons, safeText, showCelebration } from "./app.js?v=20260710-mobile-admin";
 import { requireAuth } from "./auth-guard.js?v=20260710-sync-all";
-import { ProgressManager } from "./progress-manager.js?v=20260710-sync-all";
+import { ProgressManager } from "./progress-manager.js?v=20260711-scale";
 import { getQuests } from "./data-loader.js";
 
 const signedInUser = await requireAuth();

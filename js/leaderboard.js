@@ -120,10 +120,6 @@ async function loadLeaderboard() {
     const snapshot = await sdk.getDocs(queryRef);
     const rows = snapshot.docs.map((docSnap) => normalizeRow(docSnap.id, docSnap.data()));
     renderRows(rows);
-    sdk.onSnapshot(queryRef, (nextSnapshot) => {
-      const liveRows = nextSnapshot.docs.map((docSnap) => normalizeRow(docSnap.id, docSnap.data()));
-      renderRows(liveRows);
-    }, (error) => console.warn("Live leaderboard updates unavailable:", error));
   } catch (error) {
     console.error("Leaderboard load failed:", error);
     root.innerHTML = `<section class="empty-state">Leaderboard data could not load from Firebase. Try again shortly.</section>`;
