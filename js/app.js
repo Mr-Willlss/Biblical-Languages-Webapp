@@ -197,7 +197,7 @@ function renderAppShell({ page, title, mountId = "page-root", currentUser = null
     <div class="app-shell">
       <aside class="sidebar" id="sidebar">
         <div class="sb-brand">
-          <div class="sb-logo"><span data-lang-logo>${activeLang.logo}</span></div>
+          <div class="sb-logo"><img class="brand-logo-image" src="assets/logo.png" alt="Biblical Languages logo"></div>
           <div class="sb-brand-text">
             <span class="sb-title" data-lang-label>${activeLang.label}</span>
             <span class="sb-sub">Biblical Languages</span>

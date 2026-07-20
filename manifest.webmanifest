@@ -1,0 +1,18 @@
+{
+  "id": "/Biblical-Languages-Webapp/",
+  "name": "Biblical Languages",
+  "short_name": "Biblical Languages",
+  "description": "Learn Koine Greek and Biblical Hebrew through short, game-based lessons.",
+  "start_url": "/Biblical-Languages-Webapp/dashboard.html",
+  "scope": "/Biblical-Languages-Webapp/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#101828",
+  "theme_color": "#6d5dfc",
+  "categories": ["education", "books"],
+  "icons": [
+    { "src": "assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

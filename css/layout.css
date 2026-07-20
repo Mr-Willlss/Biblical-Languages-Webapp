@@ -6,6 +6,7 @@
 }
 .sb-brand { display: flex; align-items: center; gap: 12px; min-height: 94px; padding: 20px; border-bottom: 1px solid rgba(255,255,255,.1); }
 .sb-logo, .brand-mark { display: grid; place-items: center; width: 42px; height: 42px; border: 1px solid rgba(255,255,255,.22); border-radius: 6px; color: #fff; font-family: Literata, Georgia, serif; font-weight: 650; }
+.brand-logo-image { display: block; width: 100%; height: 100%; border-radius: inherit; object-fit: cover; }
 .sb-title { display: block; color: #fff; font-size: .92rem; font-weight: 700; }
 .sb-sub { display: block; color: #95a1a6; font-size: .72rem; font-weight: 600; }
 .sb-nav { flex: 1; padding: 20px 12px; }
