@@ -277,6 +277,99 @@ function sanitizeUserForClient(user) {
   return { profile: user.profile, stats: user.stats, social: user.social, rewards: user.rewards };
 }
 
+function normalizeSearchTerm(value) {
+  return cleanAdminInput(value).toLowerCase();
+}
+
+function publicUserRecord(uid, firestoreData = {}, authUser = {}) {
+  const profile = firestoreData.profile || {};
+  const stats = firestoreData.stats || {};
+  const social = firestoreData.social || {};
+  const rewards = firestoreData.rewards || {};
+  const totalXp = asNumber(stats.totalXp ?? firestoreData.xp_total);
+  return {
+    uid,
+    displayName: profile.displayName || firestoreData.displayName || authUser.displayName || "Language Learner",
+    username: profile.username || firestoreData.username || "",
+    email: firestoreData.email || authUser.email || "",
+    photoURL: profile.photoURL || firestoreData.photoURL || authUser.photoURL || "",
+    activeLanguage: normalizeLanguage(firestoreData.activeLanguage || profile.activeLanguage || firestoreData.language),
+    bio: profile.bio || "",
+    isProfilePublic: profile.isProfilePublic !== false,
+    stats: {
+      totalXp,
+      level: asNumber(stats.level, Math.max(1, Math.floor(totalXp / 50) + 1)),
+      streakDays: asNumber(stats.streakDays ?? firestoreData.streak),
+      totalLessonsCompleted: asNumber(stats.totalLessonsCompleted),
+      totalFriends: asNumber(stats.totalFriends)
+    },
+    social: {
+      weeklyXp: asNumber(social.weeklyXp),
+      league: social.league || getLeagueLabel(asNumber(social.weeklyXp)),
+      rankTitle: social.rankTitle || getRankLabel(totalXp),
+      lastActiveAt: timestampToMillis(firestoreData.updatedAt || firestoreData.lastActiveAt || social.lastLessonCompletedAt)
+    },
+    rewards: {
+      gems: asNumber(rewards.gems ?? firestoreData.gems),
+      crowns: asNumber(rewards.crowns)
+    }
+  };
+}
+
+async function loadPublicUsers(limit = 1000) {
+  const snapshot = await db.collection("users").limit(limit).get();
+  return snapshot.docs.map((doc) => publicUserRecord(doc.id, doc.data()));
+}
+
+async function loadRelationshipIds(uid) {
+  const [friendshipsSnap, incomingSnap, outgoingSnap, blocksSnap] = await Promise.all([
+    db.collection("friendships").where("members", "array-contains", uid).get(),
+    db.collection("friendRequests").where("toUid", "==", uid).get(),
+    db.collection("friendRequests").where("fromUid", "==", uid).get(),
+    db.collection("blocks").where("blockerUid", "==", uid).get()
+  ]);
+  const friendIds = new Set();
+  friendshipsSnap.forEach((doc) => {
+    const members = Array.isArray(doc.data()?.members) ? doc.data().members : [];
+    members.forEach((memberUid) => { if (memberUid !== uid) friendIds.add(memberUid); });
+  });
+  const incoming = incomingSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  const outgoing = outgoingSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  const blockedIds = blocksSnap.docs.map((doc) => doc.data()?.blockedUid).filter(Boolean);
+  return { friendIds, incoming, outgoing, blockedIds };
+}
+
+function relationForUser(uid, relationshipIds, targetUid) {
+  if (!targetUid || targetUid === uid) return "self";
+  if (relationshipIds.blockedIds.includes(targetUid)) return "blocked";
+  if (relationshipIds.friendIds.has(targetUid)) return "friend";
+  if (relationshipIds.incoming.some((request) => request.fromUid === targetUid)) return "incoming";
+  if (relationshipIds.outgoing.some((request) => request.toUid === targetUid)) return "outgoing";
+  return "suggested";
+}
+
+function conversationIdFor(uidA, uidB) {
+  return [uidA, uidB].sort().join("_");
+}
+
+function clamp(value, min, max) {
+  return Math.min(Math.max(asNumber(value, min), min), max);
+}
+
+function trimArray(items, size = 20) {
+  return Array.isArray(items) ? items.slice(0, size) : [];
+}
+
+async function fetchRoomSnapshot(roomId) {
+  const snap = await db.collection("study_rooms").doc(roomId).get();
+  return snap.exists ? snap.data() : null;
+}
+
+async function fetchConversationSnapshot(conversationId) {
+  const snap = await db.collection("conversations").doc(conversationId).get();
+  return snap.exists ? snap.data() : null;
+}
+
 // ── Leaderboard sync (v2 Firestore trigger) ───────────────────────────────
 
 exports.onUserXPChange = onDocumentUpdated("users/{uid}", async (event) => {
@@ -537,6 +630,281 @@ exports.claimInitialAdmin = onCall(async (request) => {
   return { ok: true, user: result };
 });
 
+// ── Social discovery / feed / chat ────────────────────────────────────────
+
+exports.searchUsers = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const search = normalizeSearchTerm(request.data?.search);
+  const limit = clamp(request.data?.limit, 5, 25);
+  const [users, relationships] = await Promise.all([
+    loadPublicUsers(1000),
+    loadRelationshipIds(uid)
+  ]);
+  const results = users
+    .filter((user) => user.uid !== uid)
+    .filter((user) => !relationships.blockedIds.includes(user.uid))
+    .filter((user) => !search || [
+      user.displayName,
+      user.username,
+      user.email,
+      user.activeLanguage
+    ].some((value) => String(value || "").toLowerCase().includes(search)))
+    .sort((a, b) => (b.social.lastActiveAt || 0) - (a.social.lastActiveAt || 0) || b.stats.totalXp - a.stats.totalXp || a.displayName.localeCompare(b.displayName));
+  return {
+    users: results.slice(0, limit).map((user) => ({
+      ...user,
+      relation: relationForUser(uid, relationships, user.uid)
+    }))
+  };
+});
+
+exports.getSocialDashboard = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const search = normalizeSearchTerm(request.data?.search);
+  const limit = clamp(request.data?.limit, 6, 24);
+  const [users, relationships, roomsSnap, feedSnap] = await Promise.all([
+    loadPublicUsers(1000),
+    loadRelationshipIds(uid),
+    db.collection("study_rooms").where("memberUids", "array-contains", uid).limit(limit).get(),
+    db.collection("activities").orderBy("createdAt", "desc").limit(limit).get()
+  ]);
+  const byUid = new Map(users.map((user) => [user.uid, user]));
+  const friends = [...relationships.friendIds].map((friendUid) => byUid.get(friendUid)).filter(Boolean);
+  const incomingRequests = relationships.incoming.map((requestDoc) => ({
+    id: requestDoc.id,
+    fromUid: requestDoc.fromUid,
+    from: byUid.get(requestDoc.fromUid) || publicUserRecord(requestDoc.fromUid, {})
+  }));
+  const outgoingRequests = relationships.outgoing.map((requestDoc) => ({
+    id: requestDoc.id,
+    toUid: requestDoc.toUid,
+    to: byUid.get(requestDoc.toUid) || publicUserRecord(requestDoc.toUid, {})
+  }));
+  const blockedUsers = relationships.blockedIds.map((blockedUid) => byUid.get(blockedUid) || publicUserRecord(blockedUid, {}));
+  const suggestions = users
+    .filter((user) => user.uid !== uid)
+    .filter((user) => !relationships.friendIds.has(user.uid))
+    .filter((user) => !relationships.blockedIds.includes(user.uid))
+    .filter((user) => !relationships.incoming.some((requestDoc) => requestDoc.fromUid === user.uid))
+    .filter((user) => !relationships.outgoing.some((requestDoc) => requestDoc.toUid === user.uid))
+    .filter((user) => !search || [user.displayName, user.username, user.email].some((value) => String(value || "").toLowerCase().includes(search)))
+    .slice(0, limit)
+    .map((user) => ({
+      ...user,
+      relation: relationForUser(uid, relationships, user.uid)
+    }));
+  const rooms = roomsSnap.docs.map((docSnap) => {
+    const data = docSnap.data();
+    return {
+      id: docSnap.id,
+      lessonKey: data.lessonKey,
+      lang: data.lang,
+      hostUid: data.hostUid,
+      hostDisplayName: data.hostDisplayName || (byUid.get(data.hostUid)?.displayName || "Study Room"),
+      title: data.title || `${data.lang === "hebrew" ? "Hebrew" : "Greek"} Study Room`,
+      prompt: data.prompt || "",
+      memberUids: Array.isArray(data.memberUids) ? data.memberUids : [],
+      invitedUids: Array.isArray(data.invitedUids) ? data.invitedUids : [],
+      recentMessages: Array.isArray(data.recentMessages) ? data.recentMessages : [],
+      updatedAt: timestampToMillis(data.updatedAt || data.lastMessageAt || data.createdAt)
+    };
+  });
+  const feed = feedSnap.docs.map((docSnap) => {
+    const data = docSnap.data();
+    return {
+      id: docSnap.id,
+      actorUid: data.actorUid,
+      actor: byUid.get(data.actorUid) || publicUserRecord(data.actorUid, {}),
+      type: data.type || "lesson",
+      title: data.title || "",
+      message: data.message || data.body || "",
+      visibility: data.visibility || "public",
+      lessonKey: data.lessonKey || "",
+      lang: data.lang || "",
+      likesCount: asNumber(data.likesCount),
+      commentsCount: asNumber(data.commentsCount),
+      sharesCount: asNumber(data.sharesCount),
+      recentComments: Array.isArray(data.recentComments) ? data.recentComments : [],
+      createdAt: timestampToMillis(data.createdAt)
+    };
+  });
+  return { friends, incomingRequests, outgoingRequests, blockedUsers, suggestions, rooms, feed };
+});
+
+exports.blockUser = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const targetUid = String(request.data?.targetUid || "").trim();
+  if (!targetUid || targetUid === uid) throw new HttpsError("invalid-argument", "Choose another learner.");
+  const blockRef = db.collection("blocks").doc(`${uid}_${targetUid}`);
+  await db.runTransaction(async (transaction) => {
+    const targetDoc = await transaction.get(db.collection("users").doc(targetUid));
+    if (!targetDoc.exists) throw new HttpsError("not-found", "That learner does not exist.");
+    transaction.set(blockRef, {
+      blockerUid: uid,
+      blockedUid: targetUid,
+      createdAt: FieldValue.serverTimestamp()
+    });
+    transaction.delete(db.collection("friendships").doc(friendshipIdFor(uid, targetUid)));
+    transaction.delete(db.collection("friendRequests").doc(`${uid}_${targetUid}`));
+    transaction.delete(db.collection("friendRequests").doc(`${targetUid}_${uid}`));
+  });
+  return { ok: true };
+});
+
+exports.unblockUser = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const targetUid = String(request.data?.targetUid || "").trim();
+  if (!targetUid) throw new HttpsError("invalid-argument", "Choose a blocked learner.");
+  await db.collection("blocks").doc(`${uid}_${targetUid}`).delete().catch(() => {});
+  return { ok: true };
+});
+
+exports.getActivityFeed = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const limit = clamp(request.data?.limit, 8, 50);
+  const [users, likesSnap, commentsSnap, feedSnap] = await Promise.all([
+    loadPublicUsers(1000),
+    db.collection("activityLikes").where("uid", "==", uid).get(),
+    db.collection("activityComments").orderBy("createdAt", "desc").limit(limit * 3).get(),
+    db.collection("activities").orderBy("createdAt", "desc").limit(limit).get()
+  ]);
+  const byUid = new Map(users.map((user) => [user.uid, user]));
+  const likedIds = new Set(likesSnap.docs.map((docSnap) => docSnap.data()?.activityId).filter(Boolean));
+  const commentsByActivity = new Map();
+  commentsSnap.docs.forEach((docSnap) => {
+    const data = docSnap.data();
+    const list = commentsByActivity.get(data.activityId) || [];
+    list.push({
+      id: docSnap.id,
+      uid: data.uid,
+      user: byUid.get(data.uid) || publicUserRecord(data.uid, {}),
+      body: data.body || "",
+      createdAt: timestampToMillis(data.createdAt)
+    });
+    commentsByActivity.set(data.activityId, list);
+  });
+  return {
+    feed: feedSnap.docs.map((docSnap) => {
+      const data = docSnap.data();
+      return {
+        id: docSnap.id,
+        actorUid: data.actorUid,
+        actor: byUid.get(data.actorUid) || publicUserRecord(data.actorUid, {}),
+        title: data.title || "",
+        message: data.message || data.body || "",
+        lessonKey: data.lessonKey || "",
+        lang: data.lang || "",
+        visibility: data.visibility || "public",
+        likesCount: asNumber(data.likesCount),
+        commentsCount: asNumber(data.commentsCount),
+        sharesCount: asNumber(data.sharesCount),
+        likedByMe: likedIds.has(docSnap.id),
+        recentComments: commentsByActivity.get(docSnap.id) || [],
+        createdAt: timestampToMillis(data.createdAt)
+      };
+    })
+  };
+});
+
+exports.createActivityPost = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const userDoc = await db.collection("users").doc(uid).get();
+  const user = baseUserDocument(uid, userDoc.exists ? userDoc.data() : {});
+  const body = String(request.data?.body || "").trim().slice(0, 500);
+  const visibility = ["public", "friends", "private"].includes(String(request.data?.visibility || "")) ? String(request.data?.visibility) : "public";
+  if (!body) throw new HttpsError("invalid-argument", "Write something to post.");
+  const ref = db.collection("activities").doc();
+  await ref.set({
+    actorUid: uid,
+    visibility,
+    type: "post",
+    title: `${user.profile.displayName} shared an update`,
+    message: body,
+    body,
+    likesCount: 0,
+    commentsCount: 0,
+    sharesCount: 0,
+    recentComments: [],
+    createdAt: FieldValue.serverTimestamp()
+  });
+  return { ok: true, activityId: ref.id };
+});
+
+exports.toggleActivityLike = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const activityId = String(request.data?.activityId || "").trim();
+  if (!activityId) throw new HttpsError("invalid-argument", "Choose a post to like.");
+  const activityRef = db.collection("activities").doc(activityId);
+  const likeRef = db.collection("activityLikes").doc(`${activityId}_${uid}`);
+  await db.runTransaction(async (transaction) => {
+    const [activityDoc, likeDoc] = await Promise.all([transaction.get(activityRef), transaction.get(likeRef)]);
+    if (!activityDoc.exists) throw new HttpsError("not-found", "That post does not exist.");
+    const liked = likeDoc.exists;
+    transaction.set(likeRef, {
+      activityId,
+      uid,
+      createdAt: FieldValue.serverTimestamp()
+    }, { merge: true });
+    if (liked) {
+      transaction.delete(likeRef);
+      transaction.set(activityRef, { likesCount: Math.max(0, asNumber(activityDoc.data()?.likesCount) - 1) }, { merge: true });
+    } else {
+      transaction.set(activityRef, { likesCount: asNumber(activityDoc.data()?.likesCount) + 1 }, { merge: true });
+    }
+  });
+  return { ok: true };
+});
+
+exports.commentOnActivity = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const activityId = String(request.data?.activityId || "").trim();
+  const body = String(request.data?.body || "").trim().slice(0, 240);
+  if (!activityId || !body) throw new HttpsError("invalid-argument", "Add a comment first.");
+  const commentRef = db.collection("activityComments").doc();
+  const activityRef = db.collection("activities").doc(activityId);
+  await db.runTransaction(async (transaction) => {
+    const activityDoc = await transaction.get(activityRef);
+    if (!activityDoc.exists) throw new HttpsError("not-found", "That post does not exist.");
+    transaction.set(commentRef, {
+      activityId,
+      uid,
+      body,
+      createdAt: FieldValue.serverTimestamp()
+    });
+    const nextComments = asNumber(activityDoc.data()?.commentsCount) + 1;
+    const recent = trimArray([{
+      uid,
+      body,
+      createdAt: Date.now()
+    }, ...(Array.isArray(activityDoc.data()?.recentComments) ? activityDoc.data().recentComments : [])], 4);
+    transaction.set(activityRef, {
+      commentsCount: nextComments,
+      recentComments: recent
+    }, { merge: true });
+  });
+  return { ok: true };
+});
+
+exports.shareActivity = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const activityId = String(request.data?.activityId || "").trim();
+  if (!activityId) throw new HttpsError("invalid-argument", "Choose a post to share.");
+  const activityRef = db.collection("activities").doc(activityId);
+  await db.runTransaction(async (transaction) => {
+    const activityDoc = await transaction.get(activityRef);
+    if (!activityDoc.exists) throw new HttpsError("not-found", "That post does not exist.");
+    transaction.set(activityRef, {
+      sharesCount: asNumber(activityDoc.data()?.sharesCount) + 1
+    }, { merge: true });
+    transaction.set(db.collection("activityShares").doc(), {
+      activityId,
+      uid,
+      createdAt: FieldValue.serverTimestamp()
+    });
+  });
+  return { ok: true };
+});
+
 // ── Friend system ──────────────────────────────────────────────────────────
 
 exports.sendFriendRequest = onCall(async (request) => {
@@ -608,6 +976,8 @@ exports.createStudyRoom = onCall(async (request) => {
   const lessonKey = String(request.data?.lessonKey || "").trim();
   const lang = normalizeLanguage(request.data?.lang);
   const invitedUid = String(request.data?.invitedUid || "").trim();
+  const title = String(request.data?.title || "").trim().slice(0, 60);
+  const prompt = String(request.data?.prompt || "").trim().slice(0, 240);
   if (!ALL_LESSON_XP[lessonKey] || !lessonKey.startsWith(lang === "hebrew" ? "h" : "g")) {
     throw new HttpsError("invalid-argument", "Choose a valid lesson for this language.");
   }
@@ -623,11 +993,185 @@ exports.createStudyRoom = onCall(async (request) => {
     transaction.set(roomRef, {
       lessonKey, lang, hostUid: uid,
       hostDisplayName: host.profile.displayName,
+      title: title || `${lang === "hebrew" ? "Hebrew" : "Greek"} Study Room`,
+      prompt: prompt || "Study together, share notes, and keep one another encouraged.",
       memberUids: [uid], invitedUids: invitedUid ? [invitedUid] : [],
+      recentMessages: [],
+      messagesCount: 0,
       createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp()
     });
   });
   return { ok: true, roomId: roomRef.id };
+});
+
+exports.getStudyRooms = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const limit = clamp(request.data?.limit, 5, 20);
+  const [users, roomsSnap] = await Promise.all([
+    loadPublicUsers(1000),
+    db.collection("study_rooms").where("memberUids", "array-contains", uid).limit(limit).get()
+  ]);
+  const byUid = new Map(users.map((user) => [user.uid, user]));
+  return {
+    rooms: roomsSnap.docs.map((docSnap) => {
+      const data = docSnap.data();
+      return {
+        id: docSnap.id,
+        title: data.title || `${data.lang === "hebrew" ? "Hebrew" : "Greek"} Study Room`,
+        prompt: data.prompt || "",
+        lessonKey: data.lessonKey || "",
+        lang: data.lang || "greek",
+        hostUid: data.hostUid || "",
+        hostDisplayName: data.hostDisplayName || byUid.get(data.hostUid)?.displayName || "Study Room",
+        memberUids: Array.isArray(data.memberUids) ? data.memberUids : [],
+        invitedUids: Array.isArray(data.invitedUids) ? data.invitedUids : [],
+        recentMessages: Array.isArray(data.recentMessages) ? data.recentMessages : [],
+        messagesCount: asNumber(data.messagesCount),
+        updatedAt: timestampToMillis(data.updatedAt || data.lastMessageAt || data.createdAt)
+      };
+    })
+  };
+});
+
+exports.joinStudyRoom = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const roomId = String(request.data?.roomId || "").trim();
+  if (!roomId) throw new HttpsError("invalid-argument", "Choose a room first.");
+  const roomRef = db.collection("study_rooms").doc(roomId);
+  await db.runTransaction(async (transaction) => {
+    const roomDoc = await transaction.get(roomRef);
+    if (!roomDoc.exists) throw new HttpsError("not-found", "That room does not exist.");
+    const room = roomDoc.data();
+    const members = new Set(Array.isArray(room.memberUids) ? room.memberUids : []);
+    members.add(uid);
+    transaction.set(roomRef, {
+      memberUids: [...members],
+      updatedAt: FieldValue.serverTimestamp()
+    }, { merge: true });
+  });
+  return { ok: true };
+});
+
+exports.leaveStudyRoom = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const roomId = String(request.data?.roomId || "").trim();
+  if (!roomId) throw new HttpsError("invalid-argument", "Choose a room first.");
+  const roomRef = db.collection("study_rooms").doc(roomId);
+  await db.runTransaction(async (transaction) => {
+    const roomDoc = await transaction.get(roomRef);
+    if (!roomDoc.exists) throw new HttpsError("not-found", "That room does not exist.");
+    const room = roomDoc.data();
+    const members = new Set(Array.isArray(room.memberUids) ? room.memberUids : []);
+    members.delete(uid);
+    transaction.set(roomRef, {
+      memberUids: [...members],
+      updatedAt: FieldValue.serverTimestamp()
+    }, { merge: true });
+  });
+  return { ok: true };
+});
+
+exports.inviteToStudyRoom = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const roomId = String(request.data?.roomId || "").trim();
+  const invitedUid = String(request.data?.invitedUid || "").trim();
+  if (!roomId || !invitedUid || invitedUid === uid) throw new HttpsError("invalid-argument", "Choose a valid study partner.");
+  const roomRef = db.collection("study_rooms").doc(roomId);
+  await db.runTransaction(async (transaction) => {
+    const [roomDoc, friendshipDoc] = await Promise.all([
+      transaction.get(roomRef),
+      transaction.get(db.collection("friendships").doc(friendshipIdFor(uid, invitedUid)))
+    ]);
+    if (!roomDoc.exists) throw new HttpsError("not-found", "That room does not exist.");
+    if (!friendshipDoc.exists) throw new HttpsError("failed-precondition", "Invite a friend to this room.");
+    const room = roomDoc.data();
+    const invited = new Set(Array.isArray(room.invitedUids) ? room.invitedUids : []);
+    invited.add(invitedUid);
+    transaction.set(roomRef, {
+      invitedUids: [...invited],
+      updatedAt: FieldValue.serverTimestamp()
+    }, { merge: true });
+  });
+  return { ok: true };
+});
+
+exports.sendStudyRoomMessage = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const roomId = String(request.data?.roomId || "").trim();
+  const body = String(request.data?.body || "").trim().slice(0, 280);
+  if (!roomId || !body) throw new HttpsError("invalid-argument", "Write a message first.");
+  const roomRef = db.collection("study_rooms").doc(roomId);
+  await db.runTransaction(async (transaction) => {
+    const roomDoc = await transaction.get(roomRef);
+    if (!roomDoc.exists) throw new HttpsError("not-found", "That room does not exist.");
+    const room = roomDoc.data();
+    if (!Array.isArray(room.memberUids) || !room.memberUids.includes(uid)) {
+      throw new HttpsError("permission-denied", "Join the room before chatting.");
+    }
+    const nextMessage = {
+      uid,
+      body,
+      createdAt: Date.now()
+    };
+    const recentMessages = trimArray([nextMessage, ...(Array.isArray(room.recentMessages) ? room.recentMessages : [])], 20);
+    transaction.set(roomRef, {
+      recentMessages,
+      messagesCount: asNumber(room.messagesCount) + 1,
+      updatedAt: FieldValue.serverTimestamp(),
+      lastMessage: body,
+      lastMessageAt: FieldValue.serverTimestamp()
+    }, { merge: true });
+  });
+  return { ok: true };
+});
+
+exports.getConversation = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const peerUid = String(request.data?.peerUid || "").trim();
+  if (!peerUid || peerUid === uid) throw new HttpsError("invalid-argument", "Choose another learner.");
+  const conversationId = conversationIdFor(uid, peerUid);
+  const [users, conversationDoc] = await Promise.all([
+    loadPublicUsers(1000),
+    db.collection("conversations").doc(conversationId).get()
+  ]);
+  const byUid = new Map(users.map((user) => [user.uid, user]));
+  const data = conversationDoc.exists ? conversationDoc.data() : {
+    members: [uid, peerUid].sort(),
+    recentMessages: [],
+    updatedAt: null
+  };
+  return {
+    conversationId,
+    peer: byUid.get(peerUid) || publicUserRecord(peerUid, {}),
+    messages: Array.isArray(data.recentMessages) ? data.recentMessages.map((item) => ({
+      uid: item.uid,
+      user: byUid.get(item.uid) || publicUserRecord(item.uid, {}),
+      body: item.body || "",
+      createdAt: timestampToMillis(item.createdAt)
+    })) : []
+  };
+});
+
+exports.sendDirectMessage = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const peerUid = String(request.data?.peerUid || "").trim();
+  const body = String(request.data?.body || "").trim().slice(0, 280);
+  if (!peerUid || peerUid === uid || !body) throw new HttpsError("invalid-argument", "Choose a friend and write a message.");
+  const conversationId = conversationIdFor(uid, peerUid);
+  const conversationRef = db.collection("conversations").doc(conversationId);
+  await db.runTransaction(async (transaction) => {
+    const conversationDoc = await transaction.get(conversationRef);
+    const current = conversationDoc.exists ? conversationDoc.data() : { members: [uid, peerUid].sort(), recentMessages: [] };
+    const message = { uid, body, createdAt: Date.now() };
+    transaction.set(conversationRef, {
+      members: [uid, peerUid].sort(),
+      recentMessages: trimArray([message, ...(Array.isArray(current.recentMessages) ? current.recentMessages : [])], 30),
+      updatedAt: FieldValue.serverTimestamp(),
+      lastMessage: body,
+      lastMessageAt: FieldValue.serverTimestamp()
+    }, { merge: true });
+  });
+  return { ok: true, conversationId };
 });
 
 // ── Gems / hearts ──────────────────────────────────────────────────────────

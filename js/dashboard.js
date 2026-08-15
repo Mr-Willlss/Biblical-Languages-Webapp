@@ -86,6 +86,24 @@ root.innerHTML = `
           ${icon("arrow-right")}
         </a>
       </section>
+
+      <section class="social-strip">
+        <a class="card strip-action" href="activity.html">
+          <span class="strip-icon">${icon("rss")}</span>
+          <span><strong>Feed</strong><small>Post streak progress, lesson wins, and study updates</small></span>
+          ${icon("arrow-right")}
+        </a>
+        <a class="card strip-action" href="friends.html">
+          <span class="strip-icon">${icon("users")}</span>
+          <span><strong>Friends</strong><small>Find study partners by email, username, or display name</small></span>
+          ${icon("arrow-right")}
+        </a>
+        <a class="card strip-action" href="study-room.html">
+          <span class="strip-icon">${icon("messages-square")}</span>
+          <span><strong>Rooms</strong><small>Study together in shared rooms and keep the pace</small></span>
+          ${icon("arrow-right")}
+        </a>
+      </section>
     </section>
 
     <aside class="game-rail">

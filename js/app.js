@@ -169,6 +169,7 @@ const MOBILE_NAV_ITEMS = [
   { href: "lessons.html", page: "lessons", iconName: "map", label: "Path" },
   { href: "practice.html", page: "practice", iconName: "target", label: "Review" },
   { href: "quests.html", page: "quests", iconName: "sparkles", label: "Quests" },
+  { href: "activity.html", page: "activity", iconName: "rss", label: "Feed" },
   { href: "profile.html", page: "profile", iconName: "user-round", label: "Me" }
 ];
 
@@ -208,6 +209,9 @@ function renderAppShell({ page, title, mountId = "page-root", currentUser = null
           ${sidebarLink("lessons.html", "lessons", "map", "Path")}
           ${sidebarLink("practice.html", "practice", "swords", "Practice")}
           ${sidebarLink("quests.html", "quests", "sparkles", "Quests")}
+          ${sidebarLink("activity.html", "activity", "rss", "Feed")}
+          ${sidebarLink("friends.html", "friends", "users", "Friends")}
+          ${sidebarLink("study-room.html", "study-room", "messages-square", "Rooms")}
           ${sidebarLink("leaderboard.html", "leaderboard", "trophy", "League")}
           ${sidebarLink("profile.html", "profile", "user-round", "Profile")}
           ${sidebarLink("settings.html", "settings", "settings", "Settings")}
