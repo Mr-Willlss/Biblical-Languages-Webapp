@@ -6,16 +6,21 @@ async function ensureUserDocument(user, extra = {}) {
   if (state.mode !== "firebase") return;
   const sdk = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js");
   const displayName = user.displayName || extra.displayName || "Language Learner";
+  const email = String(user.email || extra.email || "").trim();
+  const emailLower = email.toLowerCase();
   const photoURL = user.photoURL || "";
   const activeLanguage = extra.language || LangManager.get();
   await sdk.setDoc(sdk.doc(state.db, "users", user.uid), {
     uid: user.uid,
     displayName,
-    email: user.email || "",
+    email,
+    emailLower,
     photoURL,
     activeLanguage,
     profile: {
       displayName,
+      email,
+      emailLower,
       photoURL,
       activeLanguage
     },

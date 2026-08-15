@@ -6,6 +6,7 @@ import { initFirestore } from "./firebase-config.js?v=20260701-authfix2";
 const signedInUser = await requireAuth();
 const { user, root } = renderAppShell({ page: "leaderboard", title: "League", currentUser: signedInUser });
 const cfg = LangManager.getConfig();
+let unsubscribeLeaderboard = null;
 
 function timestamp(value) {
   if (!value) return 0;
@@ -33,6 +34,7 @@ function normalizeRow(id, data = {}) {
   return {
     uid: data.uid || id,
     displayName: data.displayName || "Language Learner",
+    email: data.email || "",
     photoURL: data.photoURL || "",
     activeLanguage: data.activeLanguage || "greek",
     xpGreek,
@@ -111,20 +113,32 @@ function renderRows(rows) {
 }
 
 async function loadLeaderboard() {
+  if (unsubscribeLeaderboard) {
+    unsubscribeLeaderboard();
+    unsubscribeLeaderboard = null;
+  }
   root.innerHTML = `<section class="loading-panel"><span class="spinner"></span><strong>Loading synced leaderboard...</strong></section>`;
   try {
     const state = await initFirestore();
     if (state.mode !== "firebase") throw new Error("Firebase is not configured.");
     const sdk = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js");
     const queryRef = sdk.query(sdk.collection(state.db, "leaderboard"), sdk.orderBy("xp_total", "desc"), sdk.limit(50));
-    const snapshot = await sdk.getDocs(queryRef);
-    const rows = snapshot.docs.map((docSnap) => normalizeRow(docSnap.id, docSnap.data()));
-    renderRows(rows);
+    unsubscribeLeaderboard = sdk.onSnapshot(queryRef, (snapshot) => {
+      const rows = snapshot.docs.map((docSnap) => normalizeRow(docSnap.id, docSnap.data()));
+      renderRows(rows);
+    }, (error) => {
+      console.error("Leaderboard live sync failed:", error);
+      root.innerHTML = `<section class="empty-state">Leaderboard data could not load from Firebase. Try again shortly.</section>`;
+    });
   } catch (error) {
     console.error("Leaderboard load failed:", error);
     root.innerHTML = `<section class="empty-state">Leaderboard data could not load from Firebase. Try again shortly.</section>`;
   }
 }
+
+window.addEventListener("beforeunload", () => {
+  if (unsubscribeLeaderboard) unsubscribeLeaderboard();
+});
 
 await loadLeaderboard();
 LangManager.applyTheme();

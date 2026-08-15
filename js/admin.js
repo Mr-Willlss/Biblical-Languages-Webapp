@@ -64,6 +64,7 @@ function normalizeUser(id, data = {}) {
   const xpHebrew = asNumber(stats.xp_hebrew ?? data.xp_hebrew);
   const totalXp = asNumber(stats.totalXp ?? data.xp_total, xpGreek + xpHebrew);
   const email = data.email || "";
+  const emailLower = String(data.emailLower || email).trim().toLowerCase();
   const username = profile.username || data.username || "";
   const isAdmin = data.isAdmin === true || data.role === "admin" || email.toLowerCase() === BOOTSTRAP_ADMIN_EMAIL;
   return {
@@ -72,6 +73,7 @@ function normalizeUser(id, data = {}) {
     username,
     usernameLower: String(profile.usernameLower || data.usernameLower || username || "").trim().toLowerCase(),
     email,
+    emailLower,
     activeLanguage: data.activeLanguage || data.language || profile.activeLanguage || "greek",
     isAdmin,
     role: isAdmin ? "admin" : data.role || "student",
@@ -279,6 +281,7 @@ function buildDashboard(users, search = "") {
       user.username,
       user.usernameLower,
       user.email,
+      user.emailLower,
       user.activeLanguage
     ].some((value) => String(value || "").toLowerCase().includes(normalizedSearch)));
   }

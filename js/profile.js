@@ -19,6 +19,7 @@ function localProfile() {
 function fallbackProfile() {
   return {
     displayName: user.displayName || "Language Learner",
+    email: user.email || "",
     username: "",
     bio: "",
     studyGoal: "Read Scripture in the original languages",
@@ -36,6 +37,7 @@ function normalizeProfile(data = {}, fallback = fallbackProfile()) {
   return {
     ...fallback,
     displayName: source.displayName || data.displayName || fallback.displayName,
+    email: source.email || data.email || fallback.email,
     username: source.username || data.username || fallback.username,
     bio: source.bio || data.bio || fallback.bio,
     studyGoal: source.studyGoal || data.studyGoal || fallback.studyGoal,
@@ -91,6 +93,7 @@ function render(profile) {
         <div class="profile-identity">
           <span class="challenge-language">Public study identity</span>
           <h2 id="profile-preview-name">${safeText(profile.displayName)}</h2>
+          <p id="profile-preview-email">${safeText(profile.email || user.email || "Email not available")}</p>
           <p id="profile-preview-handle">${profile.username ? `@${safeText(profile.username)}` : "Choose a username so friends can find you"}</p>
           <p id="profile-preview-bio">${safeText(profile.bio || profile.studyGoal)}</p>
           <div class="profile-meta">
@@ -110,6 +113,7 @@ function render(profile) {
           <div class="section-title"><div><span class="path-label">Identity</span><h3>Edit profile</h3></div><span class="save-state" id="save-state">Saved across devices</span></div>
           <div class="profile-fields">
             <div class="field"><label for="display-name">Display name</label><input id="display-name" maxlength="40" value="${safeText(profile.displayName)}"></div>
+            <div class="field"><label for="email-address">Email</label><input id="email-address" value="${safeText(profile.email || user.email || "")}" readonly><small>This email is locked to your account.</small></div>
             <div class="field"><label for="username">Username</label><div class="input-prefix"><span>@</span><input id="username" maxlength="24" value="${safeText(profile.username)}" placeholder="samuel_reads"></div><small>Letters, numbers, and underscores only.</small></div>
             <div class="field field-wide"><label for="bio">Bio</label><textarea id="bio" maxlength="180" rows="3" placeholder="What are you studying?">${safeText(profile.bio)}</textarea></div>
             <div class="field"><label for="study-goal">Study goal</label><input id="study-goal" maxlength="80" value="${safeText(profile.studyGoal)}"></div>
@@ -141,6 +145,7 @@ function render(profile) {
   const updatePreview = () => {
     const name = document.getElementById("display-name").value.trim() || "Language Learner";
     document.getElementById("profile-preview-name").textContent = name;
+    document.getElementById("profile-preview-email").textContent = document.getElementById("email-address").value.trim() || profile.email || user.email || "Email not available";
     document.getElementById("profile-preview-handle").textContent = document.getElementById("username").value.trim() ? `@${document.getElementById("username").value.trim()}` : "Choose a username so friends can find you";
     document.getElementById("profile-preview-bio").textContent = document.getElementById("bio").value.trim() || document.getElementById("study-goal").value.trim();
     document.getElementById("profile-avatar").textContent = initials(name);
@@ -168,6 +173,7 @@ function render(profile) {
     }
     const next = {
       displayName: document.getElementById("display-name").value.trim() || "Language Learner",
+      email: document.getElementById("email-address").value.trim() || profile.email || user.email || "",
       username,
       usernameLower: username,
       bio: document.getElementById("bio").value.trim(),
@@ -189,6 +195,8 @@ function render(profile) {
         const storeSdk = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js");
         await authSdk.updateProfile(state.auth.currentUser, { displayName: next.displayName });
         await storeSdk.setDoc(storeSdk.doc(state.db, "users", user.uid), {
+          email: next.email,
+          emailLower: next.email.toLowerCase(),
           displayName: next.displayName,
           activeLanguage: next.activeLanguage,
           profile: {

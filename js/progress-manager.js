@@ -139,6 +139,8 @@ const ProgressManager = {
       const totalXp = xpGreek + xpHebrew;
       const level = Math.max(1, Math.floor(totalXp / 50) + 1);
       const displayName = profile.displayName || userData.displayName || "Language Learner";
+      const email = profile.email || userData.email || "";
+      const emailLower = String(profile.emailLower || userData.emailLower || email).trim().toLowerCase();
       const photoURL = profile.photoURL || userData.photoURL || "";
       const batch = sdk.writeBatch(state.db);
       batch.set(sdk.doc(state.db, "users", userId, "progress", lang), {
@@ -149,6 +151,8 @@ const ProgressManager = {
       batch.set(userRef, {
         activeLanguage: lang,
         lastActiveAt: sdk.serverTimestamp(),
+        email,
+        emailLower,
         [`xp_${lang}`]: currentXp,
         xp_total: totalXp,
         stats: {
@@ -165,6 +169,8 @@ const ProgressManager = {
       batch.set(sdk.doc(state.db, "leaderboard", userId), {
         uid: userId,
         displayName,
+        email,
+        emailLower,
         photoURL,
         activeLanguage: lang,
         xp_greek: xpGreek,
