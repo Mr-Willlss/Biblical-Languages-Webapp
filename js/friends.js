@@ -1,4 +1,3 @@
-import { LangManager } from "./language-manager.js";
 import { icon, renderAppShell, renderIcons, safeText, showToast } from "./app.js?v=20260710-mobile-admin";
 import { requireAuth } from "./auth-guard.js?v=20260710-sync-all";
 import { socialBadge, socialCall, socialInitials, timeAgo } from "./social-service.js";
@@ -123,9 +122,22 @@ function render() {
   const conversationMessages = conversation?.messages || [];
   root.innerHTML = `
     <div class="social-page">
-      <section class="hero-card">
-        <h2>Friends</h2>
-        <p>Find classmates by email, username, or display name. Build a study circle, send requests, and keep one another moving.</p>
+      <section class="hero-card social-hero">
+        <div class="social-hero-copy">
+          <span class="mission-kicker">Study circle</span>
+          <h2>Friends</h2>
+          <p>Search, connect, and study together.</p>
+        </div>
+        <div class="social-hero-art" aria-hidden="true">
+          <span class="social-orb orb-a">${socialInitials(user.displayName)}</span>
+          <span class="social-orb orb-b">+</span>
+          <span class="social-orb orb-c">✦</span>
+        </div>
+        <div class="social-mini-stats">
+          <div class="mini-stat"><strong>${state.friends.length}</strong><span>Friends</span></div>
+          <div class="mini-stat"><strong>${state.incomingRequests.length}</strong><span>Requests</span></div>
+          <div class="mini-stat"><strong>${state.blockedUsers.length}</strong><span>Safe list</span></div>
+        </div>
       </section>
 
       <section class="social-toolbar card">
@@ -133,7 +145,7 @@ function render() {
           <input id="friend-search" value="${requestInput}" placeholder="Search email, username, or display name" aria-label="Search learners">
           <button class="btn btn-primary" type="submit">${icon("search", "Search")}</button>
         </form>
-        <a class="btn btn-ghost" href="study-room.html">${icon("messages-square", "Study rooms")}</a>
+        <a class="btn btn-ghost" href="study-room.html">${icon("messages-square", "Rooms")}</a>
       </section>
 
       <section class="social-grid">

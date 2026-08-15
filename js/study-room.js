@@ -168,9 +168,22 @@ function render() {
   const room = activeRoom();
   root.innerHTML = `
     <div class="social-page">
-      <section class="hero-card">
-        <h2>Study Rooms</h2>
-        <p>Create a shared lesson space, invite your friends, chat while you study, and keep the room moving together.</p>
+      <section class="hero-card social-hero">
+        <div class="social-hero-copy">
+          <span class="mission-kicker">Shared study</span>
+          <h2>Rooms</h2>
+          <p>Study together in one shared space.</p>
+        </div>
+        <div class="social-hero-art" aria-hidden="true">
+          <span class="social-orb orb-a">✎</span>
+          <span class="social-orb orb-b">+</span>
+          <span class="social-orb orb-c">✦</span>
+        </div>
+        <div class="social-mini-stats">
+          <div class="mini-stat"><strong>${state.rooms.length}</strong><span>Rooms</span></div>
+          <div class="mini-stat"><strong>${state.friends.length}</strong><span>Friends</span></div>
+          <div class="mini-stat"><strong>${room?.messagesCount || 0}</strong><span>Updates</span></div>
+        </div>
       </section>
 
       <section class="social-toolbar card">

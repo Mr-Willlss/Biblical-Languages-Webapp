@@ -1,4 +1,3 @@
-import { LangManager } from "./language-manager.js";
 import { icon, renderAppShell, renderIcons, safeText, showToast } from "./app.js?v=20260710-mobile-admin";
 import { requireAuth } from "./auth-guard.js?v=20260710-sync-all";
 import { socialCall, socialInitials, timeAgo } from "./social-service.js";
@@ -101,11 +100,25 @@ function renderFeedItem(item) {
 }
 
 function render() {
+  const likeCount = state.feed.reduce((total, post) => total + Number(post.likesCount || 0), 0);
   root.innerHTML = `
     <div class="social-page">
-      <section class="hero-card">
-        <h2>Activity Feed</h2>
-        <p>Share streak progress, lesson wins, gems, and accomplishments. Celebrate the real work learners are doing every day.</p>
+      <section class="hero-card social-hero">
+        <div class="social-hero-copy">
+          <span class="mission-kicker">Community feed</span>
+          <h2>Feed</h2>
+          <p>Share wins, streaks, and encouragement.</p>
+        </div>
+        <div class="social-hero-art" aria-hidden="true">
+          <span class="social-orb orb-a">✦</span>
+          <span class="social-orb orb-b">♡</span>
+          <span class="social-orb orb-c">↗</span>
+        </div>
+        <div class="social-mini-stats">
+          <div class="mini-stat"><strong>${state.feed.length}</strong><span>Posts</span></div>
+          <div class="mini-stat"><strong>${likeCount}</strong><span>Likes</span></div>
+          <div class="mini-stat"><strong>${state.feed.reduce((total, post) => total + Number(post.sharesCount || 0), 0)}</strong><span>Shares</span></div>
+        </div>
       </section>
 
       <section class="social-toolbar card">

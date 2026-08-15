@@ -26,6 +26,98 @@ function renderIcons() {
   if (window.lucide) window.lucide.createIcons();
 }
 
+function notificationsEnabled() {
+  return localStorage.getItem("blq_notifications_enabled") === "true";
+}
+
+function setNotificationButtonState(enabled) {
+  document.querySelectorAll(".notify-toggle").forEach((button) => {
+    button.classList.toggle("enabled", enabled);
+    button.setAttribute("aria-pressed", enabled ? "true" : "false");
+    button.setAttribute("title", enabled ? "Reminders on" : "Reminders off");
+  });
+}
+
+async function sendReminderNotification(title, body) {
+  if (!("Notification" in window) || Notification.permission !== "granted") return;
+  const payload = {
+    body,
+    icon: "assets/icon-192.png",
+    tag: "biblical-languages-reminder",
+    renotify: true
+  };
+  try {
+    if ("serviceWorker" in navigator) {
+      const registration = await navigator.serviceWorker.ready;
+      await registration.showNotification(title, payload);
+    } else {
+      new Notification(title, payload);
+    }
+  } catch (error) {
+    console.warn("Notification delivery skipped:", error);
+  }
+}
+
+function startNotificationReminders() {
+  if (window.BLQ_NOTIFICATION_REMINDERS_STARTED) return;
+  window.BLQ_NOTIFICATION_REMINDERS_STARTED = true;
+
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./service-worker.js", { scope: "./" }).catch((error) => {
+        console.warn("Service worker registration failed:", error);
+      });
+    });
+  }
+
+  const pulse = () => {
+    if (!notificationsEnabled()) return;
+    void sendReminderNotification(
+      navigator.onLine ? "Back to Biblical Languages" : "You are offline",
+      navigator.onLine ? "Your streak, feed, and friends are waiting." : "Keep studying offline. We’ll catch up when you're back online."
+    );
+  };
+
+  window.addEventListener("online", () => {
+    if (notificationsEnabled()) {
+      showToast("You are back online.", "success");
+      pulse();
+    }
+  });
+
+  window.addEventListener("offline", () => {
+    if (notificationsEnabled()) {
+      showToast("You went offline. Lessons still work from cache.", "info");
+      pulse();
+    }
+  });
+
+  window.setInterval(() => {
+    if (notificationsEnabled()) pulse();
+  }, 60 * 60 * 1000);
+}
+
+async function toggleNotifications() {
+  if (!("Notification" in window)) {
+    showToast("Notifications are not supported in this browser.", "error");
+    return;
+  }
+  if (Notification.permission !== "granted") {
+    const permission = await Notification.requestPermission();
+    if (permission !== "granted") {
+      showToast("Reminder permission was not granted.", "info");
+      return;
+    }
+  }
+  const next = !notificationsEnabled();
+  localStorage.setItem("blq_notifications_enabled", String(next));
+  setNotificationButtonState(next);
+  showToast(next ? "Reminders enabled." : "Reminders paused.", next ? "success" : "info");
+  if (next) {
+    void sendReminderNotification("Biblical Languages reminders on", "We’ll nudge you when it’s time to return.");
+  }
+}
+
 function showToast(message, type = "info", duration = 3000) {
   let stack = document.querySelector(".toast-stack");
   if (!stack) {
@@ -166,10 +258,9 @@ function sidebarLink(href, page, iconName, label) {
 
 const MOBILE_NAV_ITEMS = [
   { href: "dashboard.html", page: "dashboard", iconName: "home", label: "Home" },
-  { href: "lessons.html", page: "lessons", iconName: "map", label: "Path" },
-  { href: "practice.html", page: "practice", iconName: "target", label: "Review" },
-  { href: "quests.html", page: "quests", iconName: "sparkles", label: "Quests" },
   { href: "activity.html", page: "activity", iconName: "rss", label: "Feed" },
+  { href: "friends.html", page: "friends", iconName: "users", label: "Friends" },
+  { href: "study-room.html", page: "study-room", iconName: "messages-square", label: "Rooms" },
   { href: "profile.html", page: "profile", iconName: "user-round", label: "Me" }
 ];
 
@@ -189,9 +280,7 @@ function renderAppShell({ page, title, mountId = "page-root", currentUser = null
   const adminSidebarLink = user.isAdmin || user.role === "admin"
     ? sidebarLink("admin.html", "admin", "shield-check", "Admin")
     : "";
-  const mobileNavItems = isAdminUser
-    ? [...MOBILE_NAV_ITEMS, { href: "admin.html", page: "admin", iconName: "shield-check", label: "Admin" }]
-    : MOBILE_NAV_ITEMS;
+  const mobileNavItems = MOBILE_NAV_ITEMS;
   document.body.classList.add("has-app-shell");
   void SettingsManager.init(user.uid);
   document.body.innerHTML = `
@@ -232,6 +321,7 @@ function renderAppShell({ page, title, mountId = "page-root", currentUser = null
           <span class="status-item">${icon("flame", formatStreak(user.streak))}</span>
           <span class="status-item">${icon("heart", user.hearts || 5)}</span>
           <span class="status-item gems-pill">${icon("gem", user.gems || 245)}</span>
+          <button class="status-item notify-toggle" type="button" aria-label="Toggle reminders">${icon("bell")}</button>
           <a class="profile-pill" href="profile.html" aria-label="Open profile">${icon("circle-user-round", `${user.displayName} · L${level.level}`)}</a>
         </div>
       </header>
@@ -251,6 +341,11 @@ function renderAppShell({ page, title, mountId = "page-root", currentUser = null
       LangManager.set(button.dataset.langButton);
     });
   });
+  document.querySelector(".notify-toggle")?.addEventListener("click", () => {
+    void toggleNotifications();
+  });
+  setNotificationButtonState(notificationsEnabled());
+  startNotificationReminders();
   LangManager.applyTheme();
   renderIcons();
   return { user, root: document.getElementById(mountId) };

@@ -491,6 +491,16 @@ select {
 .status-item:first-child svg { color: var(--coral); }
 .status-item:nth-child(2) svg { color: var(--coral); fill: var(--coral); }
 .gems-pill svg { color: var(--coral); }
+.notify-toggle {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  color: inherit;
+}
+.notify-toggle.enabled svg {
+  color: var(--teal);
+  fill: var(--teal);
+}
 .profile-pill { border-left: 1px solid var(--border); padding-left: 14px; }
 .hero-card { border-color: var(--border); background: var(--surface); box-shadow: var(--shadow-soft); }
 .hero-card::before { background: var(--coral); }
@@ -1797,6 +1807,76 @@ html[data-theme="dark"] .input-prefix { background:var(--surface); }
   gap: 18px;
 }
 
+.social-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: center;
+}
+
+.social-hero-copy {
+  display: grid;
+  gap: 6px;
+}
+
+.social-hero-copy p {
+  max-width: 42ch;
+  margin: 0;
+}
+
+.social-hero-art {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.social-orb {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--lang-primary), white 18%), color-mix(in srgb, var(--lang-secondary), white 34%));
+  color: #07111f;
+  font-weight: 900;
+  font-size: 1.05rem;
+}
+
+.orb-b,
+.orb-c {
+  width: 40px;
+  height: 40px;
+  background: color-mix(in srgb, var(--bg-card), white 12%);
+  border: 1px solid color-mix(in srgb, var(--border), transparent 10%);
+  color: var(--text);
+}
+
+.social-mini-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  grid-column: 1 / -1;
+}
+
+.mini-stat {
+  min-width: 92px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--bg-card), transparent 5%);
+  border: 1px solid color-mix(in srgb, var(--border), transparent 8%);
+}
+
+.mini-stat strong {
+  display: block;
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.mini-stat span {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
 .social-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1995,12 +2075,17 @@ html[data-theme="dark"] .input-prefix { background:var(--surface); }
 @media (max-width: 980px) {
   .social-grid,
   .social-strip,
-  .room-create-grid {
+  .room-create-grid,
+  .social-hero {
     grid-template-columns: 1fr;
   }
 
   .room-create-grid button {
     grid-column: auto;
+  }
+
+  .social-hero-art {
+    justify-content: flex-start;
   }
 }
 
