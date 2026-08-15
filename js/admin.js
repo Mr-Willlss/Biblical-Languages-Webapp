@@ -15,6 +15,7 @@ const state = {
   firebase: null,
   currentUser: null,
   data: null,
+  users: [],
   loading: false
 };
 
@@ -63,15 +64,18 @@ function normalizeUser(id, data = {}) {
   const xpHebrew = asNumber(stats.xp_hebrew ?? data.xp_hebrew);
   const totalXp = asNumber(stats.totalXp ?? data.xp_total, xpGreek + xpHebrew);
   const email = data.email || "";
+  const username = profile.username || data.username || "";
   const isAdmin = data.isAdmin === true || data.role === "admin" || email.toLowerCase() === BOOTSTRAP_ADMIN_EMAIL;
   return {
     uid: data.uid || id,
     displayName: profile.displayName || data.displayName || "Language Learner",
-    username: profile.username || data.username || "",
+    username,
+    usernameLower: String(profile.usernameLower || data.usernameLower || username || "").trim().toLowerCase(),
     email,
     activeLanguage: data.activeLanguage || data.language || profile.activeLanguage || "greek",
     isAdmin,
     role: isAdmin ? "admin" : data.role || "student",
+    raw: data,
     stats: {
       totalXp,
       xp_greek: xpGreek,
@@ -164,6 +168,7 @@ function renderUsers(users = []) {
             <th>Accuracy</th>
             <th>Last active</th>
             <th>Role</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody>
@@ -179,6 +184,11 @@ function renderUsers(users = []) {
               <td>${user.stats.accuracy ? percent(user.stats.accuracy) : "New"}</td>
               <td>${safeText(formatDate(user.social.lastActiveAt))}</td>
               <td><span class="role-pill ${user.isAdmin ? "admin" : ""}">${user.isAdmin ? "Admin" : "Student"}</span></td>
+              <td>
+                <button class="btn btn-secondary admin-row-action" type="button" data-admin-uid="${safeText(user.uid)}" data-admin-next="${user.isAdmin ? "student" : "admin"}">
+                  ${icon(user.isAdmin ? "shield-minus" : "shield-plus", user.isAdmin ? "Revoke admin" : "Make admin")}
+                </button>
+              </td>
             </tr>
           `).join("")}
         </tbody>
@@ -219,7 +229,7 @@ function renderDashboard() {
             <h2>Student information</h2>
           </div>
           <form id="student-search" class="admin-search">
-            <input id="student-search-input" type="search" placeholder="Search name, email, uid, or course" autocomplete="off">
+            <input id="student-search-input" type="search" placeholder="Search name, email, username, or course" autocomplete="off">
             <button class="btn btn-primary" type="submit">${icon("search", "Search")}</button>
           </form>
         </div>
@@ -230,11 +240,10 @@ function renderDashboard() {
         <div>
           <span class="eyebrow">Permissions</span>
           <h2>Add or remove an admin</h2>
-          <p>Use a learner email or uid. On the Spark plan this updates Firestore admin status; Cloud Functions custom claims can be added later when Blaze is enabled.</p>
+          <p>Use a learner email or username. On the Spark plan this updates Firestore admin status; Cloud Functions custom claims can be added later when Blaze is enabled.</p>
         </div>
         <form id="admin-member-form" class="admin-member-form">
-          <label>Email<input name="email" type="email" placeholder="student@example.com"></label>
-          <label>UID<input name="targetUid" type="text" placeholder="Optional if email is known"></label>
+          <label>Email or username<input name="identifier" type="text" placeholder="student@example.com or samuel_reads"></label>
           <label>Display name<input name="displayName" type="text" placeholder="Optional"></label>
           <label>Username<input name="username" type="text" placeholder="Optional"></label>
           <label class="checkbox-row"><input name="makeAdmin" type="checkbox" checked> Grant admin access</label>
@@ -268,8 +277,8 @@ function buildDashboard(users, search = "") {
     filtered = users.filter((user) => [
       user.displayName,
       user.username,
+      user.usernameLower,
       user.email,
-      user.uid,
       user.activeLanguage
     ].some((value) => String(value || "").toLowerCase().includes(normalizedSearch)));
   }
@@ -352,6 +361,7 @@ async function loadDashboard(search = "") {
     await ensureBootstrapProfile();
     const users = await loadAllUsers();
     users.sort((a, b) => b.stats.totalXp - a.stats.totalXp || a.displayName.localeCompare(b.displayName));
+    state.users = users;
     state.data = buildDashboard(users, search);
     renderDashboard();
   } catch (error) {
@@ -366,44 +376,38 @@ async function loadDashboard(search = "") {
   }
 }
 
-async function findUserDoc({ email, targetUid }) {
-  const { db, sdk } = await getFirestoreTools();
-  if (targetUid) {
-    const ref = sdk.doc(db, "users", targetUid);
-    const snap = await sdk.getDoc(ref);
-    if (!snap.exists()) throw new Error("No user profile exists for that uid yet.");
-    return { ref, id: targetUid, data: snap.data() };
-  }
-  const snapshot = await sdk.getDocs(sdk.query(
-    sdk.collection(db, "users"),
-    sdk.where("email", "==", email),
-    sdk.limit(1)
-  ));
-  if (snapshot.empty) throw new Error("No signed-in user profile exists for that email yet.");
-  const snap = snapshot.docs[0];
-  return { ref: snap.ref, id: snap.id, data: snap.data() };
+async function findUserDoc(identifier) {
+  const lookup = String(identifier || "").trim().toLowerCase();
+  if (!lookup) throw new Error("Enter an email or username.");
+  const target = state.users.find((user) => [
+    user.email,
+    user.username,
+    user.usernameLower,
+    user.displayName
+  ].some((value) => String(value || "").trim().toLowerCase() === lookup));
+  if (!target) throw new Error("No user profile exists for that email or username yet.");
+  return target;
 }
 
 async function saveAdminMember(event) {
   event.preventDefault();
   const form = new FormData(event.currentTarget);
-  const email = String(form.get("email") || "").trim().toLowerCase();
-  const targetUid = String(form.get("targetUid") || "").trim();
+  const identifier = String(form.get("identifier") || "").trim();
   const makeAdmin = form.get("makeAdmin") === "on";
-  if (!email && !targetUid) {
-    showToast("Add an email or uid first.", "warning");
+  if (!identifier) {
+    showToast("Add an email or username first.", "warning");
     return;
   }
   try {
-    const { sdk } = await getFirestoreTools();
-    const target = await findUserDoc({ email, targetUid });
-    const currentProfile = target.data.profile || {};
-    const displayName = String(form.get("displayName") || currentProfile.displayName || target.data.displayName || "").trim();
-    const username = String(form.get("username") || currentProfile.username || "").trim();
-    if (target.id === state.currentUser.uid && !makeAdmin) {
+    const { db, sdk } = await getFirestoreTools();
+    const target = await findUserDoc(identifier);
+    const currentProfile = target.raw?.profile || {};
+    const displayName = String(form.get("displayName") || currentProfile.displayName || target.displayName || "").trim();
+    const username = String(form.get("username") || currentProfile.username || target.username || "").trim();
+    if (target.uid === state.currentUser.uid && !makeAdmin) {
       throw new Error("You cannot remove your own admin access.");
     }
-    await sdk.setDoc(target.ref, {
+    await sdk.setDoc(sdk.doc(db, "users", target.uid), {
       role: makeAdmin ? "admin" : "student",
       isAdmin: makeAdmin,
       adminUpdatedAt: sdk.serverTimestamp(),
@@ -424,6 +428,29 @@ async function saveAdminMember(event) {
   }
 }
 
+async function updateMemberRole(uid, makeAdmin) {
+  try {
+    const target = state.users.find((user) => user.uid === uid);
+    if (!target) throw new Error("That user could not be found.");
+    if (uid === state.currentUser.uid && !makeAdmin) {
+      throw new Error("You cannot remove your own admin access.");
+    }
+    const { db, sdk } = await getFirestoreTools();
+    await sdk.setDoc(sdk.doc(db, "users", uid), {
+      role: makeAdmin ? "admin" : "student",
+      isAdmin: makeAdmin,
+      adminUpdatedAt: sdk.serverTimestamp(),
+      adminUpdatedBy: state.currentUser.uid,
+      updatedAt: sdk.serverTimestamp()
+    }, { merge: true });
+    showToast(makeAdmin ? "Admin access granted." : "Admin access removed.", "success");
+    await loadDashboard(document.getElementById("student-search-input")?.value || "");
+  } catch (error) {
+    console.error("Quick role update failed:", error);
+    showToast(error.message || "Could not update this user.", "error", 5000);
+  }
+}
+
 function bindDashboardEvents() {
   document.getElementById("refresh-admin")?.addEventListener("click", () => loadDashboard());
   document.getElementById("student-search")?.addEventListener("submit", (event) => {
@@ -431,6 +458,16 @@ function bindDashboardEvents() {
     loadDashboard(document.getElementById("student-search-input")?.value || "");
   });
   document.getElementById("admin-member-form")?.addEventListener("submit", saveAdminMember);
+  document.querySelectorAll("[data-admin-uid]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const uid = button.dataset.adminUid;
+      const makeAdmin = button.dataset.adminNext === "admin";
+      const confirmText = makeAdmin ? "grant admin access to" : "remove admin access from";
+      if (window.confirm(`Do you want to ${confirmText} this user?`)) {
+        void updateMemberRole(uid, makeAdmin);
+      }
+    });
+  });
 }
 
 async function init() {

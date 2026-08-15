@@ -2,6 +2,7 @@ import { LangManager, LANG_CONFIGS } from "./language-manager.js";
 import { icon, renderAppShell, renderIcons, safeText, showToast } from "./app.js?v=20260710-mobile-admin";
 import { requireAuth } from "./auth-guard.js?v=20260710-sync-all";
 import { initFirestore } from "./firebase-config.js?v=20260703-retention";
+import { signOutUser } from "./auth.js";
 
 const AVATAR_COLORS = ["#ef5b55", "#168c88", "#d28b24", "#4969a8", "#8b5aa8", "#33453f"];
 const signedInUser = await requireAuth();
@@ -100,6 +101,7 @@ function render(profile) {
         <div class="profile-actions">
           <a class="btn btn-ghost" href="friends.html">${icon("users", "Find friends")}</a>
           <a class="btn btn-ghost" href="settings.html">${icon("settings", "Settings")}</a>
+          <button class="btn btn-secondary" id="logout-button" type="button">${icon("log-out", "Log out")}</button>
         </div>
       </section>
 
@@ -208,6 +210,11 @@ function render(profile) {
       showToast("Saved locally. Cloud sync will retry when available.", "info");
     } finally {
       button.disabled = false;
+    }
+  });
+  document.getElementById("logout-button")?.addEventListener("click", () => {
+    if (window.confirm("Log out of your Biblical Languages account?")) {
+      void signOutUser();
     }
   });
   renderIcons();
