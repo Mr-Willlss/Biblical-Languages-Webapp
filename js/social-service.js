@@ -93,7 +93,9 @@ async function safeGetDocs(sdk, query, label) {
     return await sdk.getDocs(query);
   } catch (error) {
     console.warn(`Social ${label} query unavailable:`, error);
-    return { docs: [] };
+    // Let socialCall switch to the authenticated backend instead of showing
+    // an empty state that looks like the user has no social data.
+    throw error;
   }
 }
 
