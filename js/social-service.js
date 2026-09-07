@@ -207,6 +207,8 @@ async function socialCall(name, data = {}) {
     case "getConversation": {
       const peerUid = String(data.peerUid || "").trim();
       if (!peerUid || peerUid === uid) throw new Error("Choose another learner.");
+      const relationships = await loadRelationships(db, sdk, uid);
+      if (!relationships.friendIds.has(peerUid)) throw new Error("You can chat only with accepted friends.");
       const byUid = new Map((await loadPublicUsers(db, sdk, 1000)).map((user) => [user.uid, user]));
       const conversationId = conversationIdFor(uid, peerUid);
       const snap = await sdk.getDoc(sdk.doc(db, "conversations", conversationId));
@@ -226,6 +228,8 @@ async function socialCall(name, data = {}) {
       const peerUid = String(data.peerUid || "").trim();
       const body = String(data.body || "").trim().slice(0, 280);
       if (!peerUid || peerUid === uid || !body) throw new Error("Choose a friend and write a message.");
+      const relationships = await loadRelationships(db, sdk, uid);
+      if (!relationships.friendIds.has(peerUid)) throw new Error("You can message only accepted friends.");
       const conversationId = conversationIdFor(uid, peerUid);
       const conversationRef = sdk.doc(db, "conversations", conversationId);
       await sdk.runTransaction(db, async (transaction) => {
@@ -244,24 +248,17 @@ async function socialCall(name, data = {}) {
     case "sendFriendRequest": {
       const targetUid = String(data.targetUid || "").trim();
       if (!targetUid || targetUid === uid) throw new Error("Choose another learner.");
-      const requestRef = sdk.doc(db, "friendRequests", `${uid}_${targetUid}`);
-      const reverseRef = sdk.doc(db, "friendRequests", `${targetUid}_${uid}`);
       const friendshipRef = sdk.doc(db, "friendships", conversationIdFor(uid, targetUid));
-      await sdk.runTransaction(db, async (transaction) => {
-        const [targetDoc, requestDoc, reverseDoc, friendshipDoc] = await Promise.all([
-          transaction.get(sdk.doc(db, "users", targetUid)),
-          transaction.get(requestRef),
-          transaction.get(reverseRef),
-          transaction.get(friendshipRef)
-        ]);
-        if (!targetDoc.exists()) throw new Error("That learner does not exist.");
-        if (friendshipDoc.exists() || requestDoc.exists()) return;
-        if (reverseDoc.exists()) {
-          transaction.delete(reverseRef);
-          transaction.set(friendshipRef, { members: [uid, targetUid].sort(), createdAt: sdk.serverTimestamp() });
-        } else {
-          transaction.set(requestRef, { fromUid: uid, toUid: targetUid, status: "pending", createdAt: sdk.serverTimestamp() });
-        }
+      const targetDoc = await sdk.getDoc(sdk.doc(db, "users", targetUid));
+      if (!targetDoc.exists()) throw new Error("That learner does not exist.");
+      const friendshipDoc = await sdk.getDoc(friendshipRef);
+      if (friendshipDoc.exists()) throw new Error("You are already friends.");
+      const requestRef = sdk.doc(sdk.collection(db, "friendRequests"));
+      await sdk.setDoc(requestRef, {
+        fromUid: uid,
+        toUid: targetUid,
+        status: "pending",
+        createdAt: sdk.serverTimestamp()
       });
       return { ok: true };
     }

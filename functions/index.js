@@ -1129,6 +1129,8 @@ exports.getConversation = onCall(async (request) => {
   const uid = requireAuth(request);
   const peerUid = String(request.data?.peerUid || "").trim();
   if (!peerUid || peerUid === uid) throw new HttpsError("invalid-argument", "Choose another learner.");
+  const relationships = await loadRelationshipIds(uid);
+  if (!relationships.friendIds.has(peerUid)) throw new HttpsError("permission-denied", "You can chat only with accepted friends.");
   const conversationId = conversationIdFor(uid, peerUid);
   const [users, conversationDoc] = await Promise.all([
     loadPublicUsers(1000),
@@ -1157,6 +1159,8 @@ exports.sendDirectMessage = onCall(async (request) => {
   const peerUid = String(request.data?.peerUid || "").trim();
   const body = String(request.data?.body || "").trim().slice(0, 280);
   if (!peerUid || peerUid === uid || !body) throw new HttpsError("invalid-argument", "Choose a friend and write a message.");
+  const relationships = await loadRelationshipIds(uid);
+  if (!relationships.friendIds.has(peerUid)) throw new HttpsError("permission-denied", "You can message only accepted friends.");
   const conversationId = conversationIdFor(uid, peerUid);
   const conversationRef = db.collection("conversations").doc(conversationId);
   await db.runTransaction(async (transaction) => {

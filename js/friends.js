@@ -1,6 +1,6 @@
 import { icon, renderAppShell, renderIcons, safeText, showToast } from "./app.js?v=20260710-mobile-admin";
 import { requireAuth } from "./auth-guard.js?v=20260710-sync-all";
-import { socialBadge, socialCall, socialInitials, timeAgo } from "./social-service.js?v=20260907-social-fix";
+import { socialBadge, socialCall, socialInitials, timeAgo } from "./social-service.js?v=20260907-friend-requests";
 
 const signedInUser = await requireAuth();
 const { user, root } = renderAppShell({ page: "friends", title: "Friends", currentUser: signedInUser });
@@ -42,12 +42,13 @@ async function load(search = state.query) {
     state.blockedUsers = data.blockedUsers || [];
     state.suggestions = data.suggestions || [];
     if (selectedPeer) {
-      const refreshed = state.friends.find((friend) => friend.uid === selectedPeer.uid)
-        || state.suggestions.find((friend) => friend.uid === selectedPeer.uid)
-        || null;
+      const refreshed = state.friends.find((friend) => friend.uid === selectedPeer.uid) || null;
       selectedPeer = refreshed || selectedPeer;
-      if (selectedPeer?.uid) {
+      if (selectedPeer?.uid && state.friends.some((friend) => friend.uid === selectedPeer.uid)) {
         conversation = await socialCall("getConversation", { peerUid: selectedPeer.uid });
+      } else if (!refreshed) {
+        selectedPeer = null;
+        conversation = null;
       }
     } else if (state.friends.length) {
       selectedPeer = state.friends[0];
@@ -63,6 +64,10 @@ async function load(search = state.query) {
 }
 
 async function openConversation(peer) {
+  if (!state.friends.some((friend) => friend.uid === peer.uid)) {
+    showToast("You can chat only with accepted friends.", "error");
+    return;
+  }
   selectedPeer = peer;
   try {
     conversation = await socialCall("getConversation", { peerUid: peer.uid });
@@ -78,23 +83,38 @@ async function sendConversationMessage(event) {
   const input = document.getElementById("conversation-message");
   const body = input?.value.trim();
   if (!selectedPeer || !body) return;
-  await socialCall("sendDirectMessage", { peerUid: selectedPeer.uid, body });
-  input.value = "";
-  conversation = await socialCall("getConversation", { peerUid: selectedPeer.uid });
-  showToast("Message sent.", "success");
-  render();
+  try {
+    await socialCall("sendDirectMessage", { peerUid: selectedPeer.uid, body });
+    input.value = "";
+    conversation = await socialCall("getConversation", { peerUid: selectedPeer.uid });
+    showToast("Message sent.", "success");
+    render();
+  } catch (error) {
+    console.error("Message send failed:", error);
+    showToast(error.message || "Messages are available between accepted friends only.", "error");
+  }
 }
 
 async function sendRequest(targetUid) {
-  await socialCall("sendFriendRequest", { targetUid });
-  showToast("Friend request sent.", "success");
-  await load(state.query);
+  try {
+    await socialCall("sendFriendRequest", { targetUid });
+    showToast("Friend request sent.", "success");
+    await load(state.query);
+  } catch (error) {
+    console.error("Friend request failed:", error);
+    showToast(error.message || "Friend request could not be sent.", "error");
+  }
 }
 
 async function answerRequest(requestId, action) {
-  await socialCall("respondToFriendRequest", { requestId, action });
-  showToast(action === "accept" ? "Friend request accepted." : "Friend request updated.", "success");
-  await load(state.query);
+  try {
+    await socialCall("respondToFriendRequest", { requestId, action });
+    showToast(action === "accept" ? "Friend request accepted." : "Friend request updated.", "success");
+    await load(state.query);
+  } catch (error) {
+    console.error("Friend request response failed:", error);
+    showToast(error.message || "The friend request could not be updated.", "error");
+  }
 }
 
 async function removeFriend(targetUid) {
@@ -155,7 +175,6 @@ function render() {
             ${friendCard(person, person.relation, `
               <div class="social-actions">
                 <button class="btn btn-primary" data-send-request="${person.uid}" type="button">${icon("user-plus", "Add")}</button>
-                <button class="btn btn-ghost" data-open-chat="${person.uid}" type="button">${icon("messages-square", "Chat")}</button>
                 <button class="btn btn-ghost" data-block-user="${person.uid}" type="button">${icon("ban", "Block")}</button>
               </div>`)}
           `).join("") : `<div class="empty-state">No matches yet. Try a different email, username, or display name.</div>`}

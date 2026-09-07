@@ -1,6 +1,6 @@
 import { icon, renderAppShell, renderIcons, safeText, showToast } from "./app.js?v=20260710-mobile-admin";
 import { requireAuth } from "./auth-guard.js?v=20260710-sync-all";
-import { socialCall, socialInitials, timeAgo } from "./social-service.js?v=20260907-social-fix";
+import { socialCall, socialInitials, timeAgo } from "./social-service.js?v=20260907-friend-requests";
 
 const signedInUser = await requireAuth();
 const { user, root } = renderAppShell({ page: "activity", title: "Feed", currentUser: signedInUser });
