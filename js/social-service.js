@@ -135,7 +135,16 @@ async function loadRelationships(db, sdk, uid) {
   };
 }
 
-async function socialCall(name, data = {}) {
+async function callSocialFunction(name, data = {}) {
+  const state = await initFirestore();
+  if (state.mode !== "firebase" || !state.firebaseApp) throw new Error("Firebase is not configured.");
+  const functionsSdk = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-functions.js");
+  const callable = functionsSdk.httpsCallable(functionsSdk.getFunctions(state.firebaseApp), name);
+  const result = await callable(data);
+  return result.data;
+}
+
+async function directSocialCall(name, data = {}) {
   const { db, sdk } = await socialDb();
   const auth = (await initFirestore()).auth;
   const uid = auth.currentUser?.uid;
@@ -537,6 +546,20 @@ async function socialCall(name, data = {}) {
     }
     default:
       throw new Error(`Unknown social action: ${name}`);
+  }
+}
+
+async function socialCall(name, data = {}) {
+  try {
+    return await directSocialCall(name, data);
+  } catch (directError) {
+    console.warn(`Direct social access failed for ${name}; trying signed-in backend:`, directError);
+    try {
+      return await callSocialFunction(name, data);
+    } catch (backendError) {
+      backendError.cause = directError;
+      throw backendError;
+    }
   }
 }
 
