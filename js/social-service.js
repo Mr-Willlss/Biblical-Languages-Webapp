@@ -63,7 +63,9 @@ function publicUserRecord(id, data = {}) {
     uid: data.uid || id,
     displayName: profile.displayName || data.displayName || "Language Learner",
     username: profile.username || data.username || "",
-    email: data.email || "",
+    usernameLower: profile.usernameLower || data.usernameLower || profile.username || data.username || "",
+    email: data.email || profile.email || "",
+    emailLower: data.emailLower || profile.emailLower || data.email || profile.email || "",
     photoURL: profile.photoURL || data.photoURL || "",
     activeLanguage: data.activeLanguage || profile.activeLanguage || "greek",
     stats: {
@@ -86,6 +88,15 @@ function publicUserRecord(id, data = {}) {
   };
 }
 
+async function safeGetDocs(sdk, query, label) {
+  try {
+    return await sdk.getDocs(query);
+  } catch (error) {
+    console.warn(`Social ${label} query unavailable:`, error);
+    return { docs: [] };
+  }
+}
+
 function relationForUser(uid, relationships, targetUid) {
   if (!targetUid || targetUid === uid) return "self";
   if (relationships.blockedIds.has(targetUid)) return "blocked";
@@ -106,13 +117,13 @@ async function loadPublicUsers(db, sdk, limit = 1000) {
 
 async function loadRelationships(db, sdk, uid) {
   const [friendshipsSnap, incomingSnap, outgoingSnap, blocksSnap] = await Promise.all([
-    sdk.getDocs(sdk.query(sdk.collection(db, "friendships"), sdk.where("members", "array-contains", uid))),
-    sdk.getDocs(sdk.query(sdk.collection(db, "friendRequests"), sdk.where("toUid", "==", uid))),
-    sdk.getDocs(sdk.query(sdk.collection(db, "friendRequests"), sdk.where("fromUid", "==", uid))),
-    sdk.getDocs(sdk.query(sdk.collection(db, "blocks"), sdk.where("blockerUid", "==", uid)))
+    safeGetDocs(sdk, sdk.query(sdk.collection(db, "friendships"), sdk.where("members", "array-contains", uid)), "friendships"),
+    safeGetDocs(sdk, sdk.query(sdk.collection(db, "friendRequests"), sdk.where("toUid", "==", uid)), "incoming requests"),
+    safeGetDocs(sdk, sdk.query(sdk.collection(db, "friendRequests"), sdk.where("fromUid", "==", uid)), "outgoing requests"),
+    safeGetDocs(sdk, sdk.query(sdk.collection(db, "blocks"), sdk.where("blockerUid", "==", uid)), "blocks")
   ]);
   const friendIds = new Set();
-  friendshipsSnap.forEach((docSnap) => {
+  friendshipsSnap.docs.forEach((docSnap) => {
     const members = Array.isArray(docSnap.data()?.members) ? docSnap.data().members : [];
     members.forEach((memberUid) => { if (memberUid !== uid) friendIds.add(memberUid); });
   });
@@ -138,14 +149,14 @@ async function socialCall(name, data = {}) {
       const [users, relationships, roomsSnap, feedSnap] = await Promise.all([
         loadPublicUsers(db, sdk, 1000),
         loadRelationships(db, sdk, uid),
-        sdk.getDocs(sdk.query(sdk.collection(db, "study_rooms"), sdk.where("memberUids", "array-contains", uid), sdk.limit(limit))),
-        sdk.getDocs(sdk.query(sdk.collection(db, "activities"), sdk.orderBy("createdAt", "desc"), sdk.limit(limit)))
+        safeGetDocs(sdk, sdk.query(sdk.collection(db, "study_rooms"), sdk.where("memberUids", "array-contains", uid), sdk.limit(limit)), "study rooms"),
+        safeGetDocs(sdk, sdk.query(sdk.collection(db, "activities"), sdk.orderBy("createdAt", "desc"), sdk.limit(limit)), "activity preview")
       ]);
       const byUid = new Map(users.map((user) => [user.uid, user]));
       const filtered = users
         .filter((user) => user.uid !== uid)
         .filter((user) => !relationships.blockedIds.has(user.uid))
-        .filter((user) => !search || [user.displayName, user.username, user.email, user.activeLanguage].some((value) => String(value || "").toLowerCase().includes(search)))
+        .filter((user) => !search || [user.displayName, user.username, user.usernameLower, user.email, user.emailLower, user.activeLanguage].some((value) => String(value || "").toLowerCase().includes(search)))
         .sort((a, b) => (b.social.lastActiveAt || 0) - (a.social.lastActiveAt || 0) || b.stats.totalXp - a.stats.totalXp || a.displayName.localeCompare(b.displayName))
         .slice(0, limit)
         .map((user) => ({ ...user, relation: relationForUser(uid, relationships, user.uid) }));
@@ -308,7 +319,7 @@ async function socialCall(name, data = {}) {
       const limit = Math.min(Math.max(Number(data.limit || 12), 1), 30);
       const [users, roomsSnap] = await Promise.all([
         loadPublicUsers(db, sdk, 1000),
-        sdk.getDocs(sdk.query(sdk.collection(db, "study_rooms"), sdk.where("memberUids", "array-contains", uid), sdk.limit(limit)))
+        safeGetDocs(sdk, sdk.query(sdk.collection(db, "study_rooms"), sdk.where("memberUids", "array-contains", uid), sdk.limit(limit)), "study rooms")
       ]);
       const byUid = new Map(users.map((user) => [user.uid, user]));
       return {
@@ -417,9 +428,9 @@ async function socialCall(name, data = {}) {
       const limit = Math.min(Math.max(Number(data.limit || 20), 1), 50);
       const [users, likesSnap, commentsSnap, feedSnap] = await Promise.all([
         loadPublicUsers(db, sdk, 1000),
-        sdk.getDocs(sdk.query(sdk.collection(db, "activityLikes"), sdk.where("uid", "==", uid))),
-        sdk.getDocs(sdk.query(sdk.collection(db, "activityComments"), sdk.orderBy("createdAt", "desc"), sdk.limit(limit * 3))),
-        sdk.getDocs(sdk.query(sdk.collection(db, "activities"), sdk.orderBy("createdAt", "desc"), sdk.limit(limit)))
+        safeGetDocs(sdk, sdk.query(sdk.collection(db, "activityLikes"), sdk.where("uid", "==", uid)), "activity likes"),
+        safeGetDocs(sdk, sdk.query(sdk.collection(db, "activityComments"), sdk.orderBy("createdAt", "desc"), sdk.limit(limit * 3)), "activity comments"),
+        safeGetDocs(sdk, sdk.query(sdk.collection(db, "activities"), sdk.orderBy("createdAt", "desc"), sdk.limit(limit)), "activity feed")
       ]);
       const byUid = new Map(users.map((user) => [user.uid, user]));
       const likedIds = new Set(likesSnap.docs.map((docSnap) => docSnap.data().activityId).filter(Boolean));

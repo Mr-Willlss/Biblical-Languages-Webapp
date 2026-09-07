@@ -1,4 +1,4 @@
-const CACHE_NAME = "biblical-languages-v3-social";
+const CACHE_NAME = "biblical-languages-v4-social-loader";
 const APP_ROOT = new URL("./", self.location.href).pathname;
 const APP_SHELL = [
   APP_ROOT,

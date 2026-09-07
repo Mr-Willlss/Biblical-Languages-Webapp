@@ -1,6 +1,6 @@
 import { icon, renderAppShell, renderIcons, safeText, showToast } from "./app.js?v=20260710-mobile-admin";
 import { requireAuth } from "./auth-guard.js?v=20260710-sync-all";
-import { socialBadge, socialCall, socialInitials, timeAgo } from "./social-service.js";
+import { socialBadge, socialCall, socialInitials, timeAgo } from "./social-service.js?v=20260907-social-fix";
 
 const signedInUser = await requireAuth();
 const { user, root } = renderAppShell({ page: "friends", title: "Friends", currentUser: signedInUser });

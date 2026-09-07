@@ -2,7 +2,7 @@ import { LangManager } from "./language-manager.js";
 import { ProgressManager } from "./progress-manager.js?v=20260711-scale";
 import { icon, renderAppShell, renderIcons, safeText, showToast } from "./app.js?v=20260710-mobile-admin";
 import { requireAuth } from "./auth-guard.js?v=20260710-sync-all";
-import { socialCall, socialInitials, timeAgo } from "./social-service.js";
+import { socialCall, socialInitials, timeAgo } from "./social-service.js?v=20260907-social-fix";
 
 const signedInUser = await requireAuth();
 const { user, root } = renderAppShell({ page: "study-room", title: "Study Room", currentUser: signedInUser });
