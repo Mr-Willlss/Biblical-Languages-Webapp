@@ -280,7 +280,9 @@ function renderAppShell({ page, title, mountId = "page-root", currentUser = null
   const adminSidebarLink = user.isAdmin || user.role === "admin"
     ? sidebarLink("admin.html", "admin", "shield-check", "Admin")
     : "";
-  const mobileNavItems = MOBILE_NAV_ITEMS;
+  const mobileNavItems = isAdminUser
+    ? [...MOBILE_NAV_ITEMS, { href: "admin.html", page: "admin", iconName: "shield-check", label: "Admin" }]
+    : MOBILE_NAV_ITEMS;
   document.body.classList.add("has-app-shell");
   void SettingsManager.init(user.uid);
   document.body.innerHTML = `
