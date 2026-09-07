@@ -77,7 +77,13 @@ service cloud.firestore {
     match /activities/{activityId} {
       allow read: if signedIn();
       allow create: if signedIn() && request.resource.data.actorUid == request.auth.uid;
-      allow update, delete: if isAdmin();
+      // Learners may update engagement counters and the short comment preview.
+      // Post deletion remains an administrator-only moderation action.
+      allow update: if signedIn()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          "likesCount", "commentsCount", "sharesCount", "recentComments"
+        ]);
+      allow delete: if isAdmin();
     }
 
     // Admin-managed study groups and announcements
