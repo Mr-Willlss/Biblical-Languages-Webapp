@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Privacy Policy for the Biblical Languages learning platform.">
+  <title>Privacy Policy · Biblical Languages</title>
+  <link rel="icon" href="assets/favicon-64.png" type="image/png">
+  <link rel="stylesheet" href="css/variables.css?v=20260703-retention">
+  <link rel="stylesheet" href="css/base.css?v=20260703-retention">
+  <link rel="stylesheet" href="css/components.css?v=20260710-mobile-admin">
+  <link rel="stylesheet" href="css/animations.css">
+  <style>
+    :root {
+      --policy-ink: #18312d;
+      --policy-muted: #5f6f69;
+      --policy-paper: #f6f1e8;
+      --policy-card: rgba(255,255,255,.78);
+      --policy-border: rgba(24,49,45,.12);
+      --policy-gold: #b58b2f;
+      --policy-forest: #1d5b53;
+      --policy-rose: #b15f54;
+    }
+    body {
+      background:
+        radial-gradient(circle at top left, rgba(29,91,83,.14), transparent 34%),
+        radial-gradient(circle at top right, rgba(181,139,47,.14), transparent 28%),
+        linear-gradient(180deg, #f9f4ea 0%, #eef2ed 100%);
+      color: var(--policy-ink);
+    }
+    .policy-page {
+      position: relative;
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 32px 20px 56px;
+    }
+    .policy-hero {
+      display: grid;
+      grid-template-columns: 1.2fr .9fr;
+      gap: 20px;
+      align-items: stretch;
+      margin-bottom: 22px;
+    }
+    .policy-panel,
+    .policy-section,
+    .policy-note {
+      background: var(--policy-card);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--policy-border);
+      box-shadow: 0 18px 50px rgba(22, 35, 31, .08);
+    }
+    .policy-panel {
+      border-radius: 28px;
+      padding: 28px;
+    }
+    .policy-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(29,91,83,.1);
+      color: var(--policy-forest);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .policy-title {
+      margin: 16px 0 10px;
+      font-size: clamp(2rem, 4vw, 3.9rem);
+      line-height: .96;
+      letter-spacing: -.04em;
+    }
+    .policy-lead {
+      max-width: 58ch;
+      font-size: 1.02rem;
+      color: var(--policy-muted);
+      line-height: 1.7;
+    }
+    .policy-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+    .meta-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.8);
+      border: 1px solid rgba(24,49,45,.08);
+      color: var(--policy-ink);
+      font-size: .92rem;
+    }
+    .meta-chip i { width: 16px; height: 16px; }
+    .policy-art {
+      position: relative;
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+      min-height: 320px;
+      border-radius: 28px;
+      background:
+        radial-gradient(circle at 30% 22%, rgba(255,255,255,.78), transparent 22%),
+        linear-gradient(145deg, rgba(29,91,83,.16), rgba(181,139,47,.16));
+    }
+    .policy-art::before,
+    .policy-art::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(2px);
+    }
+    .policy-art::before {
+      width: 220px;
+      height: 220px;
+      background: rgba(255,255,255,.4);
+      top: 28px;
+      right: -44px;
+    }
+    .policy-art::after {
+      width: 140px;
+      height: 140px;
+      background: rgba(29,91,83,.18);
+      left: 14px;
+      bottom: 24px;
+    }
+    .art-stack {
+      position: relative;
+      z-index: 1;
+      width: min(88%, 320px);
+    }
+    .art-card {
+      padding: 18px;
+      border-radius: 22px;
+      background: rgba(255,255,255,.84);
+      border: 1px solid rgba(24,49,45,.1);
+      box-shadow: 0 14px 32px rgba(22, 35, 31, .1);
+    }
+    .art-card + .art-card { margin-top: 14px; transform: translateX(24px); }
+    .art-line {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .art-line strong {
+      display: block;
+      margin-bottom: 3px;
+      font-size: .98rem;
+    }
+    .art-line small {
+      color: var(--policy-muted);
+      line-height: 1.5;
+    }
+    .art-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 16px;
+      display: grid;
+      place-items: center;
+      flex: none;
+      background: linear-gradient(180deg, rgba(29,91,83,.16), rgba(181,139,47,.16));
+      color: var(--policy-forest);
+    }
+    .art-icon i { width: 24px; height: 24px; }
+    .policy-highlights {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin: 18px 0 26px;
+    }
+    .highlight {
+      border-radius: 22px;
+      padding: 18px;
+      min-height: 145px;
+    }
+    .highlight .art-icon { margin-bottom: 14px; }
+    .highlight h3 { margin-bottom: 8px; font-size: 1.02rem; }
+    .highlight p { color: var(--policy-muted); line-height: 1.62; font-size: .95rem; }
+    .policy-section {
+      border-radius: 24px;
+      padding: 24px;
+      margin-bottom: 16px;
+    }
+    .policy-section h2 {
+      margin-bottom: 10px;
+      font-size: 1.32rem;
+      letter-spacing: -.02em;
+    }
+    .policy-section p,
+    .policy-section li {
+      color: var(--policy-muted);
+      line-height: 1.72;
+    }
+    .policy-section ul {
+      margin: 12px 0 0;
+      padding-left: 18px;
+    }
+    .policy-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin: 18px 0 0;
+    }
+    .policy-note {
+      border-radius: 24px;
+      padding: 22px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .policy-note strong { display: block; margin-bottom: 4px; }
+    .policy-note p { margin: 0; color: var(--policy-muted); }
+    .policy-note a {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      border-radius: 999px;
+      background: var(--policy-ink);
+      color: #fff;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .policy-note a i { width: 16px; height: 16px; }
+    .policy-footer {
+      margin-top: 18px;
+      text-align: center;
+      color: var(--policy-muted);
+      font-size: .92rem;
+    }
+    .privacy-list li + li { margin-top: 8px; }
+    @media (max-width: 920px) {
+      .policy-hero,
+      .policy-highlights,
+      .policy-grid { grid-template-columns: 1fr; }
+      .art-card + .art-card { transform: none; }
+    }
+    @media (max-width: 640px) {
+      .policy-page { padding: 16px 14px 40px; }
+      .policy-panel,
+      .policy-section,
+      .policy-note { border-radius: 20px; }
+      .policy-title { font-size: 2.2rem; }
+    }
+  </style>
+</head>
+<body>
+  <main class="policy-page">
+    <section class="policy-hero">
+      <article class="policy-panel">
+        <span class="policy-kicker"><i data-lucide="shield-check"></i> Privacy Policy</span>
+        <h1 class="policy-title">Biblical Languages keeps learning data private and purpose-driven.</h1>
+        <p class="policy-lead">
+          This policy explains what data the Biblical Languages platform collects, how it is used, and the choices you have.
+          The app is designed to help learners study Greek and Hebrew through lessons, progress tracking, and account sync.
+        </p>
+        <div class="policy-meta" aria-label="Privacy summary">
+          <span class="meta-chip"><i data-lucide="database"></i> Firebase account sync</span>
+          <span class="meta-chip"><i data-lucide="book-open"></i> Lesson progress</span>
+          <span class="meta-chip"><i data-lucide="lock"></i> No ad tracking</span>
+        </div>
+      </article>
+      <aside class="policy-art" aria-label="Privacy illustration">
+        <div class="art-stack">
+          <div class="art-card">
+            <div class="art-line">
+              <div>
+                <strong>Protected study records</strong>
+                <small>Authentication, profile data, and lesson progress are stored to keep your learning in sync.</small>
+              </div>
+              <span class="art-icon"><i data-lucide="shield-check"></i></span>
+            </div>
+          </div>
+          <div class="art-card">
+            <div class="art-line">
+              <div>
+                <strong>Helpful personalization</strong>
+                <small>Settings, language preference, and achievements help the app feel consistent across devices.</small>
+              </div>
+              <span class="art-icon"><i data-lucide="sparkles"></i></span>
+            </div>
+          </div>
+          <div class="art-card">
+            <div class="art-line">
+              <div>
+                <strong>Transparent controls</strong>
+                <small>You can review or change your profile and learning preferences inside the app at any time.</small>
+              </div>
+              <span class="art-icon"><i data-lucide="sliders-horizontal"></i></span>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="policy-highlights" aria-label="Privacy highlights">
+      <article class="policy-section highlight">
+        <span class="art-icon"><i data-lucide="user-round"></i></span>
+        <h3>What we collect</h3>
+        <p>Account details such as your email address, display name, and optional profile information; lesson progress and settings; and limited technical data needed to keep the app working.</p>
+      </article>
+      <article class="policy-section highlight">
+        <span class="art-icon"><i data-lucide="heart-handshake"></i></span>
+        <h3>How we use it</h3>
+        <p>To sign you in, sync your study progress, show achievements, remember preferences, support community features, and keep the service secure.</p>
+      </article>
+      <article class="policy-section highlight">
+        <span class="art-icon"><i data-lucide="users"></i></span>
+        <h3>What we do not do</h3>
+        <p>We do not sell personal data, run third-party ad tracking in the app, or ask for more information than we need for learning and account features.</p>
+      </article>
+    </section>
+
+    <section class="policy-section">
+      <h2>Privacy Policy</h2>
+      <p><strong>Effective date:</strong> August 15, 2026</p>
+      <p>
+        Biblical Languages is a learning platform for Koine Greek and Biblical Hebrew. We use Firebase-based authentication and
+        database tools to support sign-in, profile sync, lesson progress, settings, and related app features.
+      </p>
+      <div class="policy-grid">
+        <div>
+          <h3>Information we may collect</h3>
+          <ul class="privacy-list">
+            <li>Account information such as email address, password hash handled by the authentication provider, display name, and profile photo if you use one.</li>
+            <li>Learning data such as completed lessons, scores, XP, streaks, settings, and saved preferences.</li>
+            <li>Optional profile content you choose to add, including username, bio, study goal, language choice, and social visibility settings.</li>
+            <li>Limited device and usage data needed for security, troubleshooting, and service reliability.</li>
+          </ul>
+        </div>
+        <div>
+          <h3>How we use information</h3>
+          <ul class="privacy-list">
+            <li>To create and manage your account and keep you signed in.</li>
+            <li>To save your progress across devices and restore your learning state.</li>
+            <li>To personalize the app experience, such as your active language and lesson preferences.</li>
+            <li>To improve performance, diagnose errors, and maintain platform security.</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Sharing and third parties</h3>
+          <ul class="privacy-list">
+            <li>We may share data with service providers that support the app, such as Google/Firebase, to operate authentication and cloud storage.</li>
+            <li>If you sign in with Google, Google processes data under its own terms and privacy policy.</li>
+            <li>We do not sell your personal information to advertisers or brokers.</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Retention and control</h3>
+          <ul class="privacy-list">
+            <li>We keep account and learning data while your account is active or as needed to provide the service.</li>
+            <li>You can update your profile and preferences inside the app.</li>
+            <li>To request deletion or access help, contact us using the email below.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="policy-section">
+      <h2>Children and families</h2>
+      <p>
+        Biblical Languages is an educational app and may be used by learners of different ages. If a local law requires parental consent
+        for a child’s account or data collection, that consent should be obtained before use.
+      </p>
+    </section>
+
+    <section class="policy-section">
+      <h2>Security</h2>
+      <p>
+        We use reasonable technical and organizational safeguards to protect data. No system is completely secure, but we work to limit
+        access to the information needed to run the platform.
+      </p>
+    </section>
+
+    <section class="policy-note">
+      <div>
+        <strong>Questions or requests?</strong>
+        <p>Contact the project owner at <a href="mailto:samiduvimo@gmail.com">samiduvimo@gmail.com</a>.</p>
+      </div>
+      <a href="login.html"><i data-lucide="arrow-left"></i> Back to app</a>
+    </section>
+
+    <p class="policy-footer">
+      This policy may be updated from time to time. The latest version will always be published on this page.
+    </p>
+  </main>
+  <script src="vendor/lucide.min.js?v=20260703"></script>
+  <script>if (window.lucide) window.lucide.createIcons();</script>
+</body>
+</html>
