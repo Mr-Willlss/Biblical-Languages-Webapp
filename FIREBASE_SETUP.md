@@ -32,7 +32,7 @@ Install Java 21 if Firestore emulator testing is required. Then run:
 ```powershell
 firebase login
 firebase use biblical-languages
-firebase deploy --only firestore:rules,functions
+firebase deploy --only firestore:rules,firestore:indexes,functions
 ```
 
 Cloud Functions deployment requires the Firebase project to use the Blaze plan.
@@ -46,3 +46,8 @@ Cloud Functions deployment requires the Firebase project to use the Blaze plan.
    - `users/{uid}/progress/greek` or `users/{uid}/progress/hebrew`
    - `users/{uid}/lessonCompletions/{language}_{lessonKey}`
 4. Sign in on a second browser or device and confirm the completed lesson and XP appear.
+5. Open **Community Feed**, post a short message, and confirm it appears in a second signed-in session.
+6. Use **Friends** to search for another account, send a request, and accept it from that account.
+7. Open **Study Rooms**, create a public room, then join it from a second account. Test private rooms using a friend invitation.
+
+Social discovery is served by a callable function so private user documents and email addresses are not exposed to the browser. Feed rules allow signed-in learners to read public activity and limit post creation and deletion to the post author. Room membership changes are handled by callable functions.
